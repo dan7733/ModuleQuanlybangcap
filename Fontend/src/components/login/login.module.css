@@ -1,0 +1,96 @@
+.loginContainer {
+  min-height: 100vh;
+  background-color: #e9e7e7;
+}
+
+.leftImage {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+}
+
+.rightPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+}
+
+.loginBox {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.input {
+  height: 44px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.btnLogin {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.65rem;
+  transition: background-color 0.3s ease;
+}
+
+.btnLogin:hover {
+  background-color: #0056b3;
+}
+
+.link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+/* Mặc định: ảnh nền hiển thị bình thường */
+.leftImage {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+}
+
+/* Mobile: ảnh nền bị làm mờ và phủ lớp trắng */
+@media (max-width: 767.98px) {
+  .loginContainer {
+    position: relative;
+    background-image: url('../../assets/background/TruongDHCT.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .loginContainer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.75); /* làm mờ nền bằng lớp phủ trắng */
+    z-index: 1;
+  }
+
+  .rightPanel {
+    position: relative;
+    z-index: 2; /* đảm bảo nội dung form nổi lên trên lớp phủ */
+  }
+
+  .leftImage {
+    display: none; /* không dùng div ảnh riêng nữa, vì đã dùng background trên loginContainer */
+  }
+}

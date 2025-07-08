@@ -1,0 +1,16 @@
+/* Ẩn tràn ngang */
+body {
+  overflow-x: hidden;
+}
+
+.footer {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+
+  background-color: #0B619D;
+  color: white;
+}

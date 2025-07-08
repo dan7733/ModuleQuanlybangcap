@@ -1,0 +1,35 @@
+.customTabs .nav-link {
+  font-weight: bold;
+  color: #000;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin: 0 10px;
+}
+
+.customTabs .detailproduct-nl {
+  border-bottom: 3px solid #000;
+  background-color: transparent;
+}
+
+.nav-link.active {
+  border-bottom: 3px solid #dee2e6 !important;
+  background-color: transparent;
+}
+
+.detailproductQm {
+  border-bottom: 3px solid #dee2e6 !important;
+  font-weight: bold;
+}
+
+.detailproductCapcha {
+  height: 20%;
+}
+
+.table td,
+.table th {
+  white-space: nowrap;
+}
+/* ảnh qr */
+.card {
+  height: 100%;
+}
