@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken';
 import logger from '../configs/logger.js';
 import dotenv from 'dotenv';
-
+import userModel from '../models/userModel.js';
 dotenv.config(); // Tải biến môi trường từ .env
 
-import userModel from '../models/userModel.js';
+
 
 // Giải mã token
 const verifyToken = (token) => {

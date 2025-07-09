@@ -63,19 +63,20 @@ const ContextProvider = ({ children }) => {
     storage.setItem('user', JSON.stringify(newUser));
   };
 
-  const logoutContext = async () => {
-    setUser({ email: '', auth: false });
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('user');
-    localStorage.removeItem('wishlist');
-    localStorage.removeItem('readingList');
+const logoutContext = async () => {
+  try {
+    await logout(); // Gọi logout trước để gửi yêu cầu đến server
+  } catch (error) {
+    console.warn('Logout API failed, but proceeding with local cleanup:', error);
+  }
 
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
+  // Xóa thông tin người dùng sau khi gọi logout
+  setUser({ email: '', auth: false });
+  localStorage.removeItem('user');
+  sessionStorage.removeItem('user');
+  localStorage.removeItem('wishlist');
+  localStorage.removeItem('readingList');
+};
 
   return (
     <Context.Provider value={{ user, loginContext, logoutContext, refreshAccessToken }}>

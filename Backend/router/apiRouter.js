@@ -13,6 +13,8 @@ const initAPIRoute = (app) => {
   router.get('/refresh-token', authMiddleware.userMiddlewareAPI, authMiddleware.refreshTokenAPI);
   router.get('/account', authMiddleware.userMiddlewareAPI, authMiddleware.getAccountAPI);
   
+  //google login
+    router.post('/google', loginController.googleLoginAPI)
 
   // // Lấy thông tin chi tiết người dùng (using email instead of username)
   // router.get('/detailuserbyemail/:email', authMiddleware.userMiddlewareAPI, authMiddleware.getdetailUserbyUsernameAPI);
