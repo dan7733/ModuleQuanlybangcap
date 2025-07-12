@@ -1,0 +1,2 @@
+2025-07-10 22:55:17 [ERROR]: Error requesting password reset for email: huynhdang23.77@gmail.com {"error":{}}
+2025-07-10 22:55:17 [ERROR]: Error requesting password reset: This account uses Google login. Please use Google login! {"error":{}}

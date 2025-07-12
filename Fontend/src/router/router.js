@@ -2,8 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from '../App'; // Ensure the path is correct
 import DiplomaLookup from '../components/diplomalookup/diplomalookup';
 import Login from '../components/login/login';
-// import ProductDisplay from '../containers/product/product';
-
+import ForgotPassword from '../components/forgotpassword/forgotpassword';
+import ResetPassword from '../components/resetpassword/resetpassword';
 const HomePage = () => {
   return (
     // React.Fragment
@@ -25,6 +25,14 @@ export const router = createBrowserRouter([
       {
         path: "login",
         element: <Login />
+      },
+      {
+        path: "forgot-password",
+        element: <ForgotPassword />
+      },
+      {
+        path: 'reset-password/:token',
+        element: <ResetPassword />,
       },
     ]
   }

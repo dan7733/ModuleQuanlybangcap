@@ -1,25 +1,27 @@
 import express from 'express';
-import authMiddleware from '../controllers/authMiddleware'; // Import authController
-import loginController from '../controllers/loginController'; // Import loginController
-
+import authMiddleware from '../controllers/authMiddleware';
+import loginController from '../controllers/loginController';
+import forgotPasswordController from '../controllers/forgotPasswordController';
 const router = express.Router();
 
 const initAPIRoute = (app) => {
-  // Đăng nhập và đăng xuất
+  // Login and logout
   router.post('/login', loginController.userLoginAPI);
   router.get('/logout', authMiddleware.userMiddlewareAPI, loginController.userLogoutAPI);
 
-  // Xác thực và làm mới token
+  // Token refresh and account info
   router.get('/refresh-token', authMiddleware.userMiddlewareAPI, authMiddleware.refreshTokenAPI);
   router.get('/account', authMiddleware.userMiddlewareAPI, authMiddleware.getAccountAPI);
-  
-  //google login
-    router.post('/google', loginController.googleLoginAPI)
 
-  // // Lấy thông tin chi tiết người dùng (using email instead of username)
-  // router.get('/detailuserbyemail/:email', authMiddleware.userMiddlewareAPI, authMiddleware.getdetailUserbyUsernameAPI);
+  // Google login
+  router.post('/google', loginController.googleLoginAPI);
 
-  // Gắn router vào ứng dụng Express
+  // Password reset
+  router.post('/forgot-password', forgotPasswordController.requestResetPasswordAPI);
+  router.get('/reset-password/:token', forgotPasswordController.getResetPasswordAPI);
+  router.post('/reset-password', forgotPasswordController.resetPasswordAPI);
+
+  // Attach router to Express app
   return app.use('/api/v1', router);
 };
 
