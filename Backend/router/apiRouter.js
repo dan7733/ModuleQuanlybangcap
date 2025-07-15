@@ -2,6 +2,7 @@ import express from 'express';
 import authMiddleware from '../controllers/authMiddleware';
 import loginController from '../controllers/loginController';
 import forgotPasswordController from '../controllers/forgotPasswordController';
+import degreeController from '../controllers/degreeController';
 const router = express.Router();
 
 const initAPIRoute = (app) => {
@@ -20,6 +21,14 @@ const initAPIRoute = (app) => {
   router.post('/forgot-password', forgotPasswordController.requestResetPasswordAPI);
   router.get('/reset-password/:token', forgotPasswordController.getResetPasswordAPI);
   router.post('/reset-password', forgotPasswordController.resetPasswordAPI);
+
+  // Degree management
+  // Lấy thông tin văn bằng theo ID
+  router.get('/degree/:id', degreeController.getDegreeByIdAPI);
+
+  // Lấy danh sách văn bằng theo bộ lọc
+  router.get('/degrees', degreeController.getDegreesByFilterAPI);
+
 
   // Attach router to Express app
   return app.use('/api/v1', router);

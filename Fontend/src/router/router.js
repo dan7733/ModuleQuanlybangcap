@@ -4,9 +4,9 @@ import DiplomaLookup from '../components/diplomalookup/diplomalookup';
 import Login from '../components/login/login';
 import ForgotPassword from '../components/forgotpassword/forgotpassword';
 import ResetPassword from '../components/resetpassword/resetpassword';
+
 const HomePage = () => {
   return (
-    // React.Fragment
     <> 
       <DiplomaLookup />
     </>
@@ -31,9 +31,13 @@ export const router = createBrowserRouter([
         element: <ForgotPassword />
       },
       {
-        path: 'reset-password/:token',
+        path: "reset-password/:token",
         element: <ResetPassword />,
       },
+      {
+        path: "degree/:id",
+        element: <DiplomaLookup />
+      }
     ]
   }
 ]);
