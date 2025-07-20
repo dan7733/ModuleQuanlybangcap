@@ -4,7 +4,9 @@ import DiplomaLookup from '../components/diplomalookup/diplomalookup';
 import Login from '../components/login/login';
 import ForgotPassword from '../components/forgotpassword/forgotpassword';
 import ResetPassword from '../components/resetpassword/resetpassword';
-
+import UserLayout from '../components/userlayout/userlayout';
+import UserProfile from '../components/userlayout/userprofile/userprofile';
+import ChangePassword from '../components/userlayout/changpassword/changepassword';
 const HomePage = () => {
   return (
     <> 
@@ -37,7 +39,22 @@ export const router = createBrowserRouter([
       {
         path: "degree/:id",
         element: <DiplomaLookup />
-      }
+      },
+       {
+        path: 'account',
+        element: <UserLayout />,
+        children: [
+          {
+            index: true,
+            element: <UserProfile />,
+          },
+          {
+            path: 'change-password',
+            element: <ChangePassword />,
+          },
+          // Các tuyến khác như changeinfor, changepassword, orderlist, v.v. giữ nguyên
+        ],
+      },
     ]
   }
 ]);

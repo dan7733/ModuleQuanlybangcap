@@ -57,7 +57,7 @@ const Header = () => {
                 {userDropdownOpen && (
                   <div className={styles.dropdownMenu}>
                     <Link
-                      to={`/account/${user.username}`}
+                      to={`/account`}
                       className={styles.dropdownItem}
                       onClick={() => setUserDropdownOpen(false)}
                     >

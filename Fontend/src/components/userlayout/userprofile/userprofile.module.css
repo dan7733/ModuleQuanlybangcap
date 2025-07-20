@@ -1,0 +1,311 @@
+/* Form Box */
+.formBox {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.formBox h5 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #007bff; /* Màu xanh dương chủ đạo */
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Avatar Section */
+.avatarSection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.avatarWrapper {
+  position: relative;
+  text-align: center;
+}
+
+.avatarImage {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #007bff; /* Viền xanh dương */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* User Info */
+.userInfo {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.infoItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #e6f0ff; /* Màu xanh dương nhạt khi hover */
+}
+
+.infoLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.infoLabel i {
+  margin-right: 0.5rem;
+  color: #007bff; /* Icon màu xanh dương */
+}
+
+.infoValue {
+  font-size: 1rem;
+  color: #343a40;
+  margin: 0;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #007bff; /* Màu xanh dương */
+  padding: 2rem;
+}
+
+/* Error State */
+.error {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #dc3545;
+  padding: 2rem;
+  background-color: #f8d7da;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+/* Birthday Message */
+.birthdayMessage {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #007bff; /* Màu xanh dương */
+  background-color: #e6f0ff; /* Nền xanh dương nhạt */
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: pulse 2s infinite;
+}
+
+/* Pulse animation for birthday message */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Main Layout (for UserLayout) */
+.contentWrapper {
+  position: relative;
+  background-color: #f4f6f8;
+}
+
+.layoutContainer {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Sidebar Styles (for UserLayout) */
+.sidebarUser {
+  background-color: #ffffff;
+  border-right: 1px solid #e9ecef;
+  width: 280px;
+  flex-shrink: 0;
+  padding: 2rem 1.5rem;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.sidebarHeader {
+  padding: 1.5rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.sidebarTitle {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebarUsername {
+  color: #007bff; /* Màu xanh dương */
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* Sidebar Navigation (for UserLayout) */
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navSection {
+  margin-bottom: 1rem;
+}
+
+.navCollapseButton {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: #343a40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navCollapseButton:hover {
+  background-color: #e6f0ff; /* Màu xanh dương nhạt */
+  color: #007bff;
+}
+
+.navCollapseContent {
+  padding-left: 2rem;
+}
+
+.navLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #495057;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.navLink:hover {
+  background-color: #e6f0ff; /* Màu xanh dương nhạt */
+  color: #007bff;
+  transform: translateX(5px);
+}
+
+.navLink i {
+  color: #007bff; /* Màu xanh dương */
+  width: 20px;
+  text-align: center;
+}
+
+/* Main Content (for UserLayout) */
+.mainContent {
+  flex-grow: 1;
+  padding: 3rem 2.5rem;
+  background-color: #ffffff;
+  min-height: 100vh;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Mobile Styles (for UserLayout) */
+@media (max-width: 767px) {
+  .layoutContainer {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .sidebarUser {
+    width: 280px;
+    transform: translateX(-100%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+  }
+
+  .sidebarUser.show {
+    transform: translateX(0);
+  }
+
+  .mainContent.hiddenMobile {
+    opacity: 0;
+    transform: translateX(20px);
+    pointer-events: none;
+  }
+
+  .mainContent {
+    padding: 2rem 1.5rem;
+    margin-top: 60px;
+  }
+
+  .sidebarToggle {
+    background-color: #007bff; /* Màu xanh dương */
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 110;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+  }
+
+  .sidebarToggle:hover {
+    transform: scale(1.1);
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebarToggle {
+    display: none;
+  }
+
+  .sidebarUser {
+    transform: translateX(0) !important;
+    position: relative;
+  }
+
+  .mainContent {
+    margin-top: 0;
+  }
+}

@@ -184,6 +184,56 @@ const verifyResetTokenAPI = async (resetToken) => {
   }
 };
 
+// Change password
+const changePassword = async (email, currentPassword, newPassword, confirmPassword) => {
+  try {
+    // Validate input
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      throw new Error('Please provide current password, new password, and confirm password!');
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw new Error('New password and confirm password do not match!');
+    }
+
+    // Validate password requirements
+    if (newPassword.length <= 8) {
+      throw new Error('Password must be more than 8 characters long!');
+    }
+    if (!/\d/.test(newPassword)) {
+      throw new Error('Password must contain at least one number!');
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error('User not found!');
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new Error('Current password is incorrect!');
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await User.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    return { success: true, message: 'Password changed successfully!' };
+  } catch (error) {
+    logger.error(`Error changing password for email: ${email}`, { error });
+    throw error;
+  }
+};
+
 export { User };
 export default {
   User,
@@ -192,4 +242,5 @@ export default {
   requestResetPasswordAPI,
   resetPasswordAPI,
   verifyResetTokenAPI,
+  changePassword,
 };
