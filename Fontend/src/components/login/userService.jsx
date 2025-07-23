@@ -5,7 +5,6 @@ const getAccessToken = () => {
   return user.accessToken || null;
 };
 
-// Biến trạng thái để quản lý làm mới token
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -20,14 +19,10 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Interceptor để xử lý lỗi 401
-// Nếu token hết hạn, sẽ gọi API để làm mới token một lần duy nhất
-// Nếu thành công, sẽ cập nhật token trong localStorage hoặc sessionStorage
 axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // Chỉ xử lý lỗi 401 nếu có accessToken và không phải yêu cầu /logout
     if (
       error.response &&
       error.response.status === 401 &&
@@ -36,7 +31,6 @@ axios.interceptors.response.use(
       getAccessToken()
     ) {
       if (isRefreshing) {
-        // Nếu đang làm mới token, thêm yêu cầu vào hàng đợi
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -51,10 +45,11 @@ axios.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log('Token expired, trying to refresh...');
+        console.log('Token expired, attempting to refresh...');
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/refresh-token`, {
           withCredentials: true,
         });
+        console.log('Refresh token response:', response.data);
         const { accessToken } = response.data;
         if (!accessToken) {
           throw new Error('No access token returned from refresh');
@@ -64,10 +59,14 @@ axios.interceptors.response.use(
         const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
         storage.setItem('user', JSON.stringify(updatedUser));
         processQueue(null, accessToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`; // Sửa token thành accessToken
         return axios(originalRequest);
       } catch (refreshError) {
-        console.error('Failed to refresh token', refreshError);
+        console.error('Failed to refresh token:', {
+          message: refreshError.message,
+          response: refreshError.response?.data,
+          status: refreshError.response?.status,
+        });
         processQueue(refreshError, null);
         localStorage.removeItem('user');
         sessionStorage.removeItem('user');
@@ -91,9 +90,13 @@ const login = async (email, password) => {
 
 const logout = async () => {
   const token = getAccessToken();
+  if (!token) {
+    console.warn('No access token available for logout');
+    return { data: { errCode: 0, message: 'No token to logout' } };
+  }
   return await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/logout`, {
     withCredentials: true,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: { Authorization: `Bearer ${token}` },
   });
 };
 

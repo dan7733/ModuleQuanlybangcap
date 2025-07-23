@@ -24,12 +24,10 @@ const Login = () => {
       console.log('Google response:', response);
       try {
         const { credential } = response;
-        // console.log('Credential:', credential);
         if (!credential || typeof credential !== 'string' || credential.split('.').length !== 3) {
           throw new Error('Invalid JWT format');
         }
 
-        // Giải mã JWT payload
         const payload = JSON.parse(decodeURIComponent(escape(atob(credential.split('.')[1]))));
         console.log('Decoded payload:', payload);
 
@@ -37,7 +35,6 @@ const Login = () => {
         const email = payload.email;
         const fullname = payload.name;
 
-        // Gọi API đăng nhập Google
         const googleResponse = await loginWithGoogleAPI(googleId, email, fullname);
         console.log('Google API response:', googleResponse.data);
         if (googleResponse.data.errCode !== 0) {
@@ -45,7 +42,6 @@ const Login = () => {
           return;
         }
 
-        // Lưu userData với accessToken vào storage trước
         const userData = {
           accessToken: googleResponse.data.accessToken,
           email: googleResponse.data.userDetails.email,
@@ -53,27 +49,25 @@ const Login = () => {
           avatar: googleResponse.data.userDetails.avatar,
         };
 
-        loginContext(userData, true); // Luôn lưu vào localStorage cho Google login
+        loginContext(userData, true);
 
-        // Thêm độ trễ để đảm bảo storage được cập nhật
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Gọi API account để lấy thông tin bổ sung
         const userResponse = await account();
         console.log('Account API response:', userResponse.data);
         if (!userResponse.data || userResponse.data.errCode !== 0) {
           throw new Error(userResponse.data.message || 'Invalid account data');
         }
 
-        // Cập nhật lại userData với thông tin từ account API
-        const updatedUserData = {
-          ...userData,
-          username: userResponse.data.data.user,
-          fullname: userResponse.data.data.fullname,
-          avatar: userResponse.data.data.avatar,
-        };
-
-        loginContext(updatedUserData, true); // Cập nhật lại storage
+        loginContext(
+          {
+            ...userData,
+            username: userResponse.data.data.user,
+            fullname: userResponse.data.data.fullname,
+            avatar: userResponse.data.data.avatar,
+          },
+          true
+        );
         navigate('/');
       } catch (err) {
         console.error('Google login error:', err);
@@ -127,7 +121,6 @@ const Login = () => {
     e.preventDefault();
     setErrorMessage('');
 
-    // Validate input
     const newErrors = {};
     if (!email.trim()) {
       newErrors.email = 'Email là bắt buộc';
@@ -143,7 +136,6 @@ const Login = () => {
       return;
     }
 
-    // Gọi API đăng nhập
     try {
       const loginResponse = await login(email, password);
 
@@ -186,6 +178,7 @@ const Login = () => {
           email: userResponse.data.data.user,
           fullname: userResponse.data.data.fullname,
           avatar: userResponse.data.data.avatar,
+          role: userResponse.data.data.role,
         },
         remember
       );
@@ -214,19 +207,15 @@ const Login = () => {
   return (
     <div className={`container-fluid ${styles.loginContainer}`}>
       <div className='row g-0 min-vh-100'>
-        {/* Bên trái: ảnh nền */}
         <div
           className={`col-md-8 ${styles.leftImage}`}
           style={{ backgroundImage: `url(${bgImage})` }}
         ></div>
-
-        {/* Bên phải: form */}
         <div className='col-md-4 d-flex align-items-center justify-content-center'>
           <div className='w-100 px-3 text-center'>
             <img src={logo} alt='Logo' className={styles.logo} />
             <h4 className='fw-bold mb-1'>ĐẠI HỌC CẦN THƠ</h4>
             <h6 className='mb-4'>CAN THO UNIVERSITY</h6>
-
             <div className={`${styles.loginBox} mx-auto`}>
               <h6 className='fw-bold mb-3'>ĐĂNG NHẬP</h6>
               {errorMessage && (
@@ -245,7 +234,6 @@ const Login = () => {
                   />
                   {errors.email && <div className='text-danger small mt-1'>{errors.email}</div>}
                 </div>
-
                 <div className='mb-3 text-start'>
                   <input
                     type='password'
@@ -256,7 +244,6 @@ const Login = () => {
                   />
                   {errors.password && <div className='text-danger small mt-1'>{errors.password}</div>}
                 </div>
-
                 <div className='mb-3 form-check text-start'>
                   <input
                     type='checkbox'
@@ -269,11 +256,9 @@ const Login = () => {
                     Ghi nhớ đăng nhập
                   </label>
                 </div>
-
                 <button type='submit' className={`btn ${styles.btnLogin} w-100 mb-2`}>
                   Xác nhận
                 </button>
-
                 <hr />
                 <div id='googleSignInButton' className='mb-2'></div>
                 <div className='small'>
@@ -283,7 +268,6 @@ const Login = () => {
                 </div>
               </form>
             </div>
-
             <div className='text-center mt-4'>
               <small>
                 All Rights Reserved. Developed by{' '}

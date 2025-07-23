@@ -5,14 +5,14 @@ import { Outlet } from 'react-router-dom';
 import Header from './components/header/header';
 import Footer from './components/footer/footer';
 import { ContextProvider } from './components/login/context';
-// import Menu from './containers/menu/menu';
-// import './containers/css/style.css'
+import Topbar from './components/topbar/topbar';
+
 function App() {
   return (
     <ContextProvider>
       <div>
         <div className='topbar'>
-
+          <Topbar />
         </div>
         <div className='header'>
           <Header />

@@ -7,6 +7,9 @@ import ResetPassword from '../components/resetpassword/resetpassword';
 import UserLayout from '../components/userlayout/userlayout';
 import UserProfile from '../components/userlayout/userprofile/userprofile';
 import ChangePassword from '../components/userlayout/changpassword/changepassword';
+import AddDegreetype from '../components/degreetype/adddegreetype/adddegreetype'; 
+import ListDegreetype from '../components/degreetype/listdegreetype/listdegreetype';
+import UpdateDegreetype from '../components/degreetype/updatedegreetype/updatedegreetype';
 const HomePage = () => {
   return (
     <> 
@@ -40,7 +43,19 @@ export const router = createBrowserRouter([
         path: "degree/:id",
         element: <DiplomaLookup />
       },
-       {
+      {
+        path: "adddegreetype",
+        element: <AddDegreetype />
+      },
+      {
+        path: "listdegreetype",
+        element: <ListDegreetype />
+      },
+      {
+        path: "updatedegreetype/:id",
+        element: <UpdateDegreetype />,
+      },
+      {
         path: 'account',
         element: <UserLayout />,
         children: [

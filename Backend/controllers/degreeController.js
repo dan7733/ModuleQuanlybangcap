@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Degree, getApprovedDegreeById, getAllApprovedDegrees } from '../models/degreeModel.js';
+import { Degree, getApprovedDegreeById, getAllApprovedDegrees, getApprovedDegreesByFilter } from '../models/degreeModel.js';
 import logger from '../configs/logger.js';
 
 // Lấy thông tin văn bằng đã duyệt theo ID
@@ -40,7 +40,7 @@ const getDegreesByFilterAPI = async (req, res) => {
   if (major) query.major = { $regex: major, $options: 'i' };
 
   try {
-    const degrees = await Degree.find(query).lean();
+    const degrees = await getApprovedDegreesByFilter(query);
     if (!degrees || degrees.length === 0) {
       logger.warn(`No approved degrees found with provided filters`, { query, user: req.user?.email });
       return res.status(404).json({ errCode: 1, message: 'No approved degrees found' });

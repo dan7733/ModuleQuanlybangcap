@@ -4,6 +4,7 @@ import loginController from '../controllers/loginController';
 import forgotPasswordController from '../controllers/forgotPasswordController';
 import degreeController from '../controllers/degreeController';
 import userController from '../controllers/userController';
+import degreetypeController from '../controllers/degreetypeController';
 const router = express.Router();
 
 const initAPIRoute = (app) => {
@@ -37,6 +38,16 @@ const initAPIRoute = (app) => {
 
   // Đổi mật khẩu
   router.post('/users/change-password', authMiddleware.userMiddlewareAPI, userController.changePassword);
+
+
+  //
+  router.post('/degree-type', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.createDegreeTypeAPI);
+  router.put('/degree-type/:id', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.updateDegreeTypeAPI);
+  router.delete('/degree-type/:id', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.deleteDegreeTypeAPI);
+  router.get('/degree-type/:id', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.getDegreeTypeByIdAPI);
+  router.get('/degree-types/issuer', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.getDegreeTypesByIssuerAPI);
+
+
 
 
   // Attach router to Express app

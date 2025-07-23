@@ -1,0 +1,35 @@
+.actionButtons .btn {
+  min-width: 120px;
+}
+
+.borderBox {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1.5rem;
+  background-color: #fff;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.fileInput {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fileInput input[type="file"] {
+  width: auto;
+}
+
+.btn-primary {
+  background-color: #0B619D;
+  border-color: #0B619D;
+}
+
+.btn-primary:hover {
+  background-color: #094b7a;
+  border-color: #094b7a;
+}
