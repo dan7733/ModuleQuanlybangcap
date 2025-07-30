@@ -19,6 +19,7 @@ app.use(express.json());
 viewEngine(app);
 
 // Serve static files
+app.use("/templates", express.static(path.join(__dirname, "public/templates")));
 app.use("/static", express.static(path.join(__dirname, "public")));
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use(express.static(path.join(__dirname, "views"))); // For CSS, JS in views

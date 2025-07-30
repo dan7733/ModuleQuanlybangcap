@@ -198,6 +198,273 @@ const changePassword = async (email, currentPassword, newPassword, confirmPasswo
   }
 };
 
+// tạo người dùng
+const createUser = async (userId, userData) => {
+  try {
+    logger.debug('Starting user creation', { userData });
+
+    // Check database connection
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('Database not connected');
+      throw new Error('Database not connected');
+    }
+
+    // Validate input data
+    const { fullname, email, password, roleid, issuerId, creatorEmail } = userData;
+    if (!fullname || !email || !password || roleid === undefined || !issuerId || !creatorEmail) {
+      logger.error('Missing required user fields', { userData });
+      throw new Error('Missing required user fields');
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email }).lean();
+    if (existingUser) {
+      logger.error(`Email already exists: ${email}`);
+      throw new Error('Email already exists');
+    }
+
+    // Validate issuerId
+    if (!mongoose.Types.ObjectId.isValid(issuerId)) {
+      logger.error(`Invalid Issuer ID: ${issuerId}`);
+      throw new Error('Invalid Issuer ID');
+    }
+
+    // Validate roleid
+    if (![0, 1, 2, 3].includes(Number(roleid))) {
+      logger.error(`Invalid roleid: ${roleid}`);
+      throw new Error('Invalid role ID');
+    }
+
+    // Validate password
+    if (typeof password !== 'string') {
+      logger.error(`Invalid password type: ${typeof password}`);
+      throw new Error('Password must be a string');
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const newUser = new User({
+      fullname,
+      email,
+      password: hashedPassword,
+      roleid: Number(roleid),
+      issuerId,
+    });
+
+    await newUser.save();
+    logger.info(`User created successfully by creator ${creatorEmail}: ${newUser._id}`);
+    return newUser;
+  } catch (error) {
+    logger.error(`Error creating user by creator ${userData.creatorEmail || 'unknown'}`, {
+      error: {
+        message: error.message || 'Unknown error',
+        stack: error.stack,
+      },
+      userData,
+    });
+    throw error;
+  }
+};
+
+// Get users with pagination, filtering, and sorting
+const getUsers = async (page = 1, limit = 10, search = '', role = '', sort = 'desc') => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const query = {};
+    if (search) {
+      query.$or = [
+        { fullname: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (role) {
+      query.roleid = role === 'admin' ? 3 : role === 'manager' ? 2 : role === 'certifier' ? 1 : 0;
+    }
+
+    // Define sort order
+    const sortOrder = sort === 'asc' ? 1 : -1;
+
+    // Fetch paginated, filtered, and sorted users
+    const users = await User.find(query)
+      .sort({ createdAt: sortOrder })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Map roleid to role name
+    const mappedUsers = users.map((user) => ({
+      ...user,
+      role:
+        user.roleid === 3 ? 'admin' :
+        user.roleid === 2 ? 'manager' :
+        user.roleid === 1 ? 'certifier' : 'user',
+    }));
+
+    // Count total filtered users
+    const total = await User.countDocuments(query);
+
+    logger.info(`Fetched ${users.length} users (page: ${page}, limit: ${limit}, search: ${search}, role: ${role}, sort: ${sort})`);
+    return {
+      users: mappedUsers,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
+  } catch (error) {
+    logger.error(`Error fetching users`, { error });
+    throw error;
+  }
+};
+
+// Delete user
+const deleteUser = async (userId, targetUserId) => {
+  try {
+    // Validate targetUserId
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      logger.error(`Invalid User ID: ${targetUserId}`);
+      throw new Error('Invalid User ID');
+    }
+
+    // Check if target user exists
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      logger.error(`User not found for ID: ${targetUserId}`);
+      throw new Error('User not found');
+    }
+
+    await User.deleteOne({ _id: targetUserId });
+    logger.info(`User deleted successfully by user ${userId}: ${targetUserId}`);
+    return { success: true, message: 'User deleted successfully' };
+  } catch (error) {
+    logger.error(`Error deleting user by user ${userId}`, {
+      error: {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      },
+    });
+    throw error;
+  }
+};
+
+
+// Get user by ID
+const getUserById = async (id) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      logger.error(`Invalid User ID: ${id}`);
+      throw new Error('Invalid User ID');
+    }
+
+    const user = await User.findById(id).lean();
+    if (!user) {
+      logger.error(`User not found for ID: ${id}`);
+      throw new Error('User not found');
+    }
+
+    logger.info(`Fetched user with ID: ${id}`);
+    return {
+      ...user,
+      role:
+        user.roleid === 3 ? 'admin' :
+        user.roleid === 2 ? 'manager' :
+        user.roleid === 1 ? 'certifier' : 'user',
+    };
+  } catch (error) {
+    logger.error(`Error fetching user with ID ${id}`, { error });
+    throw error;
+  }
+};
+
+// Update user
+// Update user
+const updateUser = async (adminId, targetUserId, userData) => {
+  try {
+    // Validate admin
+    const admin = await User.findById(adminId).lean();
+    if (!admin) {
+      logger.error(`Admin not found with ID: ${adminId}`);
+      throw new Error('Admin not found');
+    }
+    if (admin.roleid !== 3) {
+      logger.error(`User ${adminId} is not authorized to update user`);
+      throw new Error('Only admin can update user');
+    }
+
+    // Validate targetUserId
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      logger.error(`Invalid User ID: ${targetUserId}`);
+      throw new Error('Invalid User ID');
+    }
+
+    // Check if target user exists
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      logger.error(`User not found for ID: ${targetUserId}`);
+      throw new Error('User not found');
+    }
+
+    // Validate input data
+    const { fullname, dob, phonenumber, email, roleid, status, issuerId } = userData;
+    if (!fullname || !email) {
+      logger.error(`Missing required user fields: ${JSON.stringify(userData)}`);
+      throw new Error('Missing required user fields');
+    }
+
+    // Validate issuerId if provided
+    if (issuerId && !mongoose.Types.ObjectId.isValid(issuerId)) {
+      logger.error(`Invalid Issuer ID: ${issuerId}`);
+      throw new Error('Invalid Issuer ID');
+    }
+    if (issuerId) {
+      const issuerExists = await mongoose.model('Issuer').findById(issuerId).lean();
+      if (!issuerExists) {
+        logger.error(`Issuer not found for ID: ${issuerId}`);
+        throw new Error('Issuer not found');
+      }
+    }
+
+    // Check for duplicate email or phonenumber
+    if (email !== targetUser.email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        logger.error(`Email already exists: ${email}`);
+        throw new Error('Email or phone number already exists');
+      }
+    }
+    if (phonenumber && phonenumber !== targetUser.phonenumber) {
+      const existingPhone = await User.findOne({ phonenumber });
+      if (existingPhone) {
+        logger.error(`Phone number already exists: ${phonenumber}`);
+        throw new Error('Email or phone number already exists');
+      }
+    }
+
+    // Update fields
+    targetUser.fullname = fullname;
+    targetUser.dob = dob || null;
+    targetUser.phonenumber = phonenumber || null;
+    targetUser.email = email;
+    targetUser.roleid = roleid !== undefined ? parseInt(roleid) : targetUser.roleid;
+    targetUser.status = status || targetUser.status;
+    if (issuerId) {
+      targetUser.issuerId = issuerId; // Update issuerId if provided
+    }
+
+    await targetUser.save();
+    logger.info(`User updated successfully by admin ${adminId}: ${targetUserId}`);
+    return targetUser;
+  } catch (error) {
+    logger.error(`Error updating user by admin ${adminId}`, { error });
+    throw error;
+  }
+};
+
 export { User };
 export default {
   User,
@@ -207,4 +474,9 @@ export default {
   resetPasswordAPI,
   verifyResetTokenAPI,
   changePassword,
+  createUser,
+  getUserById,
+  updateUser,
+  getUsers,
+  deleteUser
 };

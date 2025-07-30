@@ -236,5 +236,24 @@ const getDegreeTypesByIssuer = async (issuerId, page = 1, limit = 10, search = '
   }
 };
 
-export { DegreeType, createDegreeType, getDegreeTypeById, updateDegreeType, deleteDegreeType, getDegreeTypesByIssuer };
+const fetchDegreeTypesByIssuer = async (issuerId) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(issuerId)) {
+      logger.error(`Invalid Issuer ID: ${issuerId}`);
+      throw new Error('Invalid Issuer ID');
+    }
+
+    // Fetch all degree types for the given issuerId
+    const degreeTypes = await DegreeType.find({ issuerId }).lean();
+
+    logger.info(`Fetched ${degreeTypes.length} degree types for issuer ${issuerId}`);
+    return degreeTypes;
+  } catch (error) {
+    logger.error(`Error fetching degree types for issuer ${issuerId}`, { error });
+    throw error;
+  }
+};
+
+
+export { DegreeType, createDegreeType, getDegreeTypeById, updateDegreeType, deleteDegreeType, getDegreeTypesByIssuer, fetchDegreeTypesByIssuer };
 export default DegreeType;

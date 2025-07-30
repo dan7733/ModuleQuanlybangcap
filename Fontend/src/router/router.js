@@ -10,6 +10,16 @@ import ChangePassword from '../components/userlayout/changpassword/changepasswor
 import AddDegreetype from '../components/degreetype/adddegreetype/adddegreetype'; 
 import ListDegreetype from '../components/degreetype/listdegreetype/listdegreetype';
 import UpdateDegreetype from '../components/degreetype/updatedegreetype/updatedegreetype';
+import AddUser from '../components/usermanager/adduser/adduser'; // Ensure the path is correct
+import ListUser from '../components/usermanager/listuser/listuser';
+import UpdateUser from '../components/usermanager/updateuser/updateuser'; // Ensure the path is correct
+import AddDegree from '../components/degreemanager/adddegree/adddegree'; // Ensure the path is correct
+import AddDegreeImage from '../components/degreemanager/adddegreeimage/adddegreeimage'; // Ensure the path is correct
+import AddDegreeExcel from '../components/degreemanager/adddegreeexcel/adddegreeexcel'; // Ensure the path is correct
+import AddIssuer from '../components/issuermanager/addissuer/addissuer'; // Ensure the path is correct
+import ListIssuer from '../components/issuermanager/listissuer/listissuer';
+import UpdateIssuer from '../components/issuermanager/updateissuer/updateissuer'; // Ensure the path is correct
+import ListDegree from '../components/degreemanager/listdegree/listdegree';
 const HomePage = () => {
   return (
     <> 
@@ -54,6 +64,46 @@ export const router = createBrowserRouter([
       {
         path: "updatedegreetype/:id",
         element: <UpdateDegreetype />,
+      },
+      {
+        path: 'adduser',
+        element: <AddUser />,
+      },
+      {
+        path: "listuser",
+        element: <ListUser />
+      },
+      {
+        path: 'updateuser/:id', // New route
+        element: <UpdateUser />,
+      },
+      {
+        path: 'addissuer', // New route
+        element: <AddIssuer />,
+      },
+      {
+        path: 'listissuer', // New route
+        element: <ListIssuer />,
+      },
+      {
+        path: 'updateissuer/:id',
+        element: <UpdateIssuer />,
+      },
+      {
+        path: 'adddegree', // New route
+        element: <AddDegree />,
+      },
+      {
+        path: 'adddegreeimage', // New route
+        element: <AddDegreeImage />,
+      },
+      {
+        path: 'adddegreeexcel', // New route
+        element: <AddDegreeExcel />,
+      },
+    {
+        path: 'listdegree', // New route
+        element: <ListDegree />,
       },
       {
         path: 'account',

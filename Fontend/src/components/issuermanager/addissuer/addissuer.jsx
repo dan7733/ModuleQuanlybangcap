@@ -2,20 +2,19 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Context } from '../../login/context';
-import styles from './adddegreetype.module.css';
+import styles from './addissuer.module.css';
 
-const AddDegreetype = () => {
+const AddIssuer = () => {
   const navigate = useNavigate();
   const { user } = useContext(Context);
   const [formData, setFormData] = useState({
-    title: '',
-    level: '',
-    major: '',
+    name: '',
+    address: '',
+    contactEmail: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   // Hàm lấy accessToken
   const getAccessToken = () => {
@@ -25,7 +24,7 @@ const AddDegreetype = () => {
 
   // Kiểm tra xác thực và vai trò
   useEffect(() => {
-    if (!user || !user.auth || !['admin', 'certifier'].includes(user.role)) {
+    if (!user || !user.auth || !['admin'].includes(user.role)) {
       navigate('/');
     }
   }, [user, navigate]);
@@ -37,10 +36,12 @@ const AddDegreetype = () => {
 
   // Ánh xạ lỗi server thành thông báo tiếng Việt
   const mapServerErrorToMessage = (serverMessage) => {
-    if (serverMessage === 'Missing required degree type fields') {
-      return 'Vui lòng điền đầy đủ các trường bắt buộc (tiêu đề, cấp độ, chuyên ngành).';
+    if (serverMessage === 'Missing required issuer fields') {
+      return 'Vui lòng điền đầy đủ tên tổ chức.';
+    } else if (serverMessage === 'Only certifier or admin can create issuer') {
+      return 'Chỉ chứng nhận viên hoặc quản trị viên mới có thể thêm tổ chức.';
     }
-    return 'Thêm loại bằng cấp thất bại. Vui lòng thử lại.';
+    return 'Thêm tổ chức thất bại. Vui lòng thử lại.';
   };
 
   const handleSubmit = async (e) => {
@@ -59,12 +60,11 @@ const AddDegreetype = () => {
 
     try {
       const response = await axios.post(
-        `${API_URL}/api/v1/degree-type`,
+        `${process.env.REACT_APP_API_URL}/api/v1/issuer`,
         {
-          title: formData.title,
-          level: formData.level,
-          major: formData.major,
-          email: user.email, // Gửi email từ Context
+          name: formData.name,
+          address: formData.address,
+          contactEmail: formData.contactEmail,
         },
         {
           headers: {
@@ -76,11 +76,11 @@ const AddDegreetype = () => {
       );
 
       if (response.data.errCode === 0) {
-        setSuccess('Thêm loại bằng cấp thành công!');
+        setSuccess('Thêm tổ chức thành công!');
         setFormData({
-          title: '',
-          level: '',
-          major: '',
+          name: '',
+          address: '',
+          contactEmail: '',
         });
       } else {
         setError(mapServerErrorToMessage(response.data.message));
@@ -99,9 +99,9 @@ const AddDegreetype = () => {
 
   const handleReset = () => {
     setFormData({
-      title: '',
-      level: '',
-      major: '',
+      name: '',
+      address: '',
+      contactEmail: '',
     });
     setError('');
     setSuccess('');
@@ -111,7 +111,7 @@ const AddDegreetype = () => {
     <div className="bg-light p-4">
       <div className="container bg-white p-4 rounded shadow-sm">
         <div className={styles.borderBox}>
-          <h4 className="mb-4 text-center">Thêm loại bằng cấp mới</h4>
+          <h4 className="mb-4 text-center">Thêm tổ chức mới</h4>
 
           {error && <div className="alert alert-danger">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
@@ -125,44 +125,42 @@ const AddDegreetype = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Tiêu đề</label>
+              <label className="col-md-3 col-form-label">Tên tổ chức</label>
               <div className="col-md-9">
                 <input
                   type="text"
-                  name="title"
+                  name="name"
                   className="form-control"
-                  placeholder="Nhập tiêu đề loại bằng (VD: Chứng chỉ A)"
-                  value={formData.title}
+                  placeholder="Nhập tên tổ chức"
+                  value={formData.name}
                   onChange={handleInputChange}
                   required
                 />
               </div>
             </div>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Cấp độ</label>
+              <label className="col-md-3 col-form-label">Địa chỉ</label>
               <div className="col-md-9">
                 <input
                   type="text"
-                  name="level"
+                  name="address"
                   className="form-control"
-                  placeholder="Nhập cấp độ (VD: Chứng chỉ, Cử nhân)"
-                  value={formData.level}
+                  placeholder="Nhập địa chỉ (không bắt buộc)"
+                  value={formData.address}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Chuyên ngành</label>
+              <label className="col-md-3 col-form-label">Email liên hệ</label>
               <div className="col-md-9">
                 <input
-                  type="text"
-                  name="major"
+                  type="email"
+                  name="contactEmail"
                   className="form-control"
-                  placeholder="Nhập chuyên ngành (VD: Lập trình Web)"
-                  value={formData.major}
+                  placeholder="Nhập email liên hệ (không bắt buộc)"
+                  value={formData.contactEmail}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
@@ -186,4 +184,4 @@ const AddDegreetype = () => {
   );
 };
 
-export default AddDegreetype;
+export default AddIssuer;

@@ -2,20 +2,22 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Context } from '../../login/context';
-import styles from './adddegreetype.module.css';
+import styles from './adduser.module.css';
 
-const AddDegreetype = () => {
+const AddUser = () => {
   const navigate = useNavigate();
   const { user } = useContext(Context);
   const [formData, setFormData] = useState({
-    title: '',
-    level: '',
-    major: '',
+    fullname: '',
+    email: '',
+    password: '',
+    roleid: '',
+    issuerId: '',
   });
+  const [issuers, setIssuers] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   // Hàm lấy accessToken
   const getAccessToken = () => {
@@ -25,8 +27,28 @@ const AddDegreetype = () => {
 
   // Kiểm tra xác thực và vai trò
   useEffect(() => {
-    if (!user || !user.auth || !['admin', 'certifier'].includes(user.role)) {
+    if (!user || !user.auth || user.role !== 'admin') {
       navigate('/');
+    } else {
+      // Fetch issuers for dropdown
+      const fetchIssuers = async () => {
+        try {
+          const token = getAccessToken();
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/issuers`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (response.data.errCode === 0) {
+            setIssuers(response.data.data);
+          } else {
+            setError('Không thể tải danh sách tổ chức.');
+          }
+        } catch (err) {
+          setError('Lỗi khi tải danh sách tổ chức. Vui lòng thử lại.');
+        }
+      };
+      fetchIssuers();
     }
   }, [user, navigate]);
 
@@ -37,10 +59,14 @@ const AddDegreetype = () => {
 
   // Ánh xạ lỗi server thành thông báo tiếng Việt
   const mapServerErrorToMessage = (serverMessage) => {
-    if (serverMessage === 'Missing required degree type fields') {
-      return 'Vui lòng điền đầy đủ các trường bắt buộc (tiêu đề, cấp độ, chuyên ngành).';
+    if (serverMessage === 'Missing required user fields') {
+      return 'Vui lòng điền đầy đủ các trường bắt buộc (họ tên, email, mật khẩu, vai trò, tổ chức).';
+    } else if (serverMessage === 'Email already exists') {
+      return 'Email đã tồn tại. Vui lòng sử dụng email khác.';
+    } else if (serverMessage === 'Invalid issuer ID') {
+      return 'Tổ chức không hợp lệ. Vui lòng chọn lại.';
     }
-    return 'Thêm loại bằng cấp thất bại. Vui lòng thử lại.';
+    return 'Thêm người dùng thất bại. Vui lòng thử lại.';
   };
 
   const handleSubmit = async (e) => {
@@ -59,12 +85,14 @@ const AddDegreetype = () => {
 
     try {
       const response = await axios.post(
-        `${API_URL}/api/v1/degree-type`,
+        `${process.env.REACT_APP_API_URL}/api/v1/user`,
         {
-          title: formData.title,
-          level: formData.level,
-          major: formData.major,
-          email: user.email, // Gửi email từ Context
+          fullname: formData.fullname,
+          email: formData.email,
+          password: formData.password,
+          roleid: parseInt(formData.roleid),
+          issuerId: formData.issuerId,
+          creatorEmail: user.email, // Gửi email của người tạo
         },
         {
           headers: {
@@ -76,11 +104,13 @@ const AddDegreetype = () => {
       );
 
       if (response.data.errCode === 0) {
-        setSuccess('Thêm loại bằng cấp thành công!');
+        setSuccess('Thêm người dùng thành công!');
         setFormData({
-          title: '',
-          level: '',
-          major: '',
+          fullname: '',
+          email: '',
+          password: '',
+          roleid: '',
+          issuerId: '',
         });
       } else {
         setError(mapServerErrorToMessage(response.data.message));
@@ -99,9 +129,11 @@ const AddDegreetype = () => {
 
   const handleReset = () => {
     setFormData({
-      title: '',
-      level: '',
-      major: '',
+      fullname: '',
+      email: '',
+      password: '',
+      roleid: '',
+      issuerId: '',
     });
     setError('');
     setSuccess('');
@@ -111,7 +143,7 @@ const AddDegreetype = () => {
     <div className="bg-light p-4">
       <div className="container bg-white p-4 rounded shadow-sm">
         <div className={styles.borderBox}>
-          <h4 className="mb-4 text-center">Thêm loại bằng cấp mới</h4>
+          <h4 className="mb-4 text-center">Thêm người dùng mới</h4>
 
           {error && <div className="alert alert-danger">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
@@ -125,45 +157,82 @@ const AddDegreetype = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Tiêu đề</label>
+              <label className="col-md-3 col-form-label">Họ và tên</label>
               <div className="col-md-9">
                 <input
                   type="text"
-                  name="title"
+                  name="fullname"
                   className="form-control"
-                  placeholder="Nhập tiêu đề loại bằng (VD: Chứng chỉ A)"
-                  value={formData.title}
+                  placeholder="Nhập họ và tên"
+                  value={formData.fullname}
                   onChange={handleInputChange}
                   required
                 />
               </div>
             </div>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Cấp độ</label>
+              <label className="col-md-3 col-form-label">Email</label>
               <div className="col-md-9">
                 <input
-                  type="text"
-                  name="level"
+                  type="email"
+                  name="email"
                   className="form-control"
-                  placeholder="Nhập cấp độ (VD: Chứng chỉ, Cử nhân)"
-                  value={formData.level}
+                  placeholder="Nhập email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   required
                 />
               </div>
             </div>
             <div className="mb-3 row align-items-center">
-              <label className="col-md-3 col-form-label">Chuyên ngành</label>
+              <label className="col-md-3 col-form-label">Mật khẩu</label>
               <div className="col-md-9">
                 <input
-                  type="text"
-                  name="major"
+                  type="password"
+                  name="password"
                   className="form-control"
-                  placeholder="Nhập chuyên ngành (VD: Lập trình Web)"
-                  value={formData.major}
+                  placeholder="Nhập mật khẩu"
+                  value={formData.password}
                   onChange={handleInputChange}
                   required
                 />
+              </div>
+            </div>
+            <div className="mb-3 row align-items-center">
+              <label className="col-md-3 col-form-label">Vai trò</label>
+              <div className="col-md-9">
+                <select
+                  name="roleid"
+                  className="form-select"
+                  value={formData.roleid}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Chọn vai trò</option>
+                  <option value="0">Người dùng</option>
+                  <option value="1">Chứng nhận viên</option>
+                  <option value="2">Quản lý</option>
+                  <option value="3">Quản trị viên</option>
+                </select>
+              </div>
+            </div>
+            <div className="mb-3 row align-items-center">
+              <label className="col-md-3 col-form-label">Tổ chức</label>
+              <div className="col-md-9">
+                <select
+                  name="issuerId"
+                  className="form-select"
+                  value={formData.issuerId}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Chọn tổ chức</option>
+                  {issuers.map((issuer) => (
+                    <option key={issuer._id} value={issuer._id}>
+                      {issuer.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="mt-4 d-flex gap-2 flex-wrap justify-content-center">
@@ -186,4 +255,4 @@ const AddDegreetype = () => {
   );
 };
 
-export default AddDegreetype;
+export default AddUser;

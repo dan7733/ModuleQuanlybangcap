@@ -99,6 +99,80 @@ const certifierMiddlewareAPI = (req, res, next) => {
   next();
 };
 
+const adminMiddlewareAPI = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  // Kiểm tra xem token có được cung cấp không và nó có định dạng Bearer không
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.warn('Access token missing or malformed in adminMiddlewareAPI');
+    return res.status(401).json({
+      errCode: 1,
+      message: 'Access token is required',
+    });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const decoded = verifyToken(token);
+
+  if (!decoded) {
+    logger.warn('Invalid or expired access token in adminMiddlewareAPI');
+    return res.status(403).json({
+      errCode: 1,
+      message: 'Invalid or expired access token',
+    });
+  }
+
+  // Kiểm tra vai trò: chỉ cho phép admin
+  if (decoded.role !== 'admin') {
+    logger.warn('Unauthorized role for adminMiddlewareAPI', { email: decoded.email, role: decoded.role });
+    return res.status(403).json({
+      errCode: 1,
+      message: 'Access restricted to admin role only',
+    });
+  }
+
+  req.user = decoded;
+  next();
+};
+
+// manager 
+const managerMiddlewareAPI = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  // Kiểm tra xem token có được cung cấp không và nó có định dạng Bearer không
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.warn('Access token missing or malformed in managerMiddlewareAPI');
+    return res.status(401).json({
+      errCode: 1,
+      message: 'Access token is required',
+    });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  const decoded = verifyToken(token);
+
+  if (!decoded) {
+    logger.warn('Invalid or expired access token in managerMiddlewareAPI');
+    return res.status(403).json({
+      errCode: 1,
+      message: 'Invalid or expired access token',
+    });
+  }
+
+  // Kiểm tra vai trò: chỉ cho phép admin hoặc certifier
+  if (!['admin', 'manager'].includes(decoded.role)) {
+    logger.warn('Unauthorized role for managerMiddlewareAPI', { email: decoded.email, role: decoded.role });
+    return res.status(403).json({
+      errCode: 1,
+      message: 'Access restricted to admin or certifier roles only',
+    });
+  }
+
+  req.user = decoded;
+  next();
+};
+
+
+
 // Làm mới access token
 const refreshTokenAPI = (req, res) => {
   const token = req.cookies.jwt;
@@ -168,5 +242,7 @@ export default {
   userMiddlewareAPI,
   refreshTokenAPI,
   getAccountAPI,
-  certifierMiddlewareAPI
+  certifierMiddlewareAPI,
+  adminMiddlewareAPI,
+  managerMiddlewareAPI
 };
