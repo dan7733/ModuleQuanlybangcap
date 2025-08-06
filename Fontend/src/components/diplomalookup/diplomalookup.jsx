@@ -5,17 +5,21 @@ import { BrowserQRCodeReader } from '@zxing/library';
 import { useParams } from 'react-router-dom';
 import styles from './diplomalookup.module.css';
 import qrImage from '../../assets/diplomalookup/qrnew.png';
+import logo from '../../assets/logo/logoDHCT.png';
 
 const DiplomaLookup = () => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     fullname: '',
     dob: '',
+    issuerId: '',
+    degreeTypeId: '',
     serialNumber: '',
-    registryNumber: '',
     captcha: '',
   });
   const [degrees, setDegrees] = useState([]);
+  const [issuers, setIssuers] = useState([]);
+  const [degreeTypes, setDegreeTypes] = useState([]);
   const [selectedDegree, setSelectedDegree] = useState(null);
   const [selectedQrDegree, setSelectedQrDegree] = useState(null);
   const [qrSuccess, setQrSuccess] = useState(false);
@@ -48,7 +52,49 @@ const DiplomaLookup = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (name === 'issuerId') {
+      setFormData({ ...formData, issuerId: value, degreeTypeId: '' });
+      fetchDegreeTypes(value);
+    }
   };
+
+  const fetchIssuers = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/v1/public/issuers`);
+      if (response.data.errCode === 0) {
+        setIssuers(response.data.data);
+      } else {
+        setError('Không thể lấy danh sách đơn vị cấp');
+      }
+    } catch (err) {
+      setError('Lỗi khi lấy danh sách đơn vị cấp');
+    }
+  }, [API_URL]);
+
+  const fetchDegreeTypes = async (issuerId) => {
+    if (!issuerId) {
+      setDegreeTypes([]);
+      return;
+    }
+    try {
+      const response = await axios.get(`${API_URL}/api/v1/public/degree-types/by-issuer`, {
+        params: { issuerId },
+      });
+      if (response.data.errCode === 0) {
+        setDegreeTypes(response.data.data);
+      } else {
+        setError('Không thể lấy danh sách loại văn bằng');
+        setDegreeTypes([]);
+      }
+    } catch (err) {
+      setError('Lỗi khi lấy danh sách loại văn bằng');
+      setDegreeTypes([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchIssuers();
+  }, [fetchIssuers]);
 
   useEffect(() => {
     qrReaderRef.current = new BrowserQRCodeReader();
@@ -59,53 +105,13 @@ const DiplomaLookup = () => {
     };
   }, []);
 
-  const refreshToken = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/v1/refresh-token`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('refreshToken')}`,
-        },
-      });
-      if (response.data.errCode === 0) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-        return response.data.accessToken;
-      } else {
-        // Handle token refresh failure
-        setError('Không thể làm mới token');
-        return null;
-      }
-    } catch (err) {
-      setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      return null;
-    }
-  }, [API_URL]);
-
   useEffect(() => {
     if (id) {
       const fetchDegreeById = async () => {
         setError('');
         setLoading(true);
         try {
-          let token = localStorage.getItem('accessToken');
-          let response = await axios.get(`${API_URL}/api/v1/degree/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (response.data.errCode === 1 && response.data.message.includes('token')) {
-            token = await refreshToken();
-            if (!token) {
-              setLoading(false);
-              return;
-            }
-            response = await axios.get(`${API_URL}/api/v1/degree/${id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          }
-
+          const response = await axios.get(`${API_URL}/api/v1/degree/${id}`);
           if (response.data.errCode === 0) {
             setDegrees([response.data.data]);
             setSelectedDegree(response.data.data);
@@ -123,8 +129,7 @@ const DiplomaLookup = () => {
       };
       fetchDegreeById();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, refreshToken]); // Suppress warning for API_URL
+  }, [id, API_URL]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -138,40 +143,30 @@ const DiplomaLookup = () => {
       return;
     }
 
-    if (!formData.serialNumber && !formData.registryNumber) {
-      setError('Vui lòng nhập ít nhất một trong hai: số hiệu hoặc số vào sổ');
-      setLoading(false);
-      return;
+    if (formData.serialNumber) {
+      if (!formData.serialNumber) {
+        setError('Vui lòng nhập số hiệu văn bằng');
+        setLoading(false);
+        return;
+      }
+    } else {
+      if (!formData.issuerId || !formData.degreeTypeId || !formData.fullname || !formData.dob) {
+        setError('Vui lòng điền đầy đủ đơn vị cấp, loại văn bằng, họ tên và ngày sinh');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
-      let token = localStorage.getItem('accessToken');
-      let response = await axios.get(`${API_URL}/api/v1/degrees`, {
+      const response = await axios.get(`${API_URL}/api/v1/degrees`, {
         params: {
+          fullname: formData.serialNumber ? '' : formData.fullname,
+          dob: formData.serialNumber ? '' : formData.dob,
+          issuerId: formData.serialNumber ? '' : formData.issuerId,
+          degreeTypeId: formData.serialNumber ? '' : formData.degreeTypeId,
           serialNumber: formData.serialNumber,
-          registryNumber: formData.registryNumber,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
         },
       });
-
-      if (response.data.errCode === 1 && response.data.message.includes('token')) {
-        token = await refreshToken();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        response = await axios.get(`${API_URL}/api/v1/degrees`, {
-          params: {
-            serialNumber: formData.serialNumber,
-            registryNumber: formData.registryNumber,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
 
       if (response.data.errCode === 0) {
         setDegrees(response.data.data);
@@ -191,28 +186,8 @@ const DiplomaLookup = () => {
   const handleViewDetails = async (id) => {
     setError('');
     setLoading(true);
-
     try {
-      let token = localStorage.getItem('accessToken');
-      let response = await axios.get(`${API_URL}/api/v1/degree/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data.errCode === 1 && response.data.message.includes('token')) {
-        token = await refreshToken();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        response = await axios.get(`${API_URL}/api/v1/degree/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
-
+      const response = await axios.get(`${API_URL}/api/v1/degree/${id}`);
       if (response.data.errCode === 0) {
         setSelectedDegree(response.data.data);
         setError('');
@@ -234,13 +209,40 @@ const DiplomaLookup = () => {
     if (qrCanvasRef.current) {
       const canvas = qrCanvasRef.current.querySelector('canvas');
       if (canvas) {
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `qr-code-${selectedQrDegree._id}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Create a new canvas to combine QR code, logo, and text
+        const newCanvas = document.createElement('canvas');
+        const ctx = newCanvas.getContext('2d');
+        newCanvas.width = 300;
+        newCanvas.height = 400;
+
+        // Fill background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+        // Draw QR code
+        ctx.drawImage(canvas, 50, 50, 200, 200);
+
+        // Load and draw logo
+        const logoImg = new Image();
+        logoImg.src = logo;
+        logoImg.onload = () => {
+          ctx.drawImage(logoImg, 100, 260, 100, 100);
+
+          // Draw text
+          ctx.fillStyle = '#0b619d';
+          ctx.font = 'bold 16px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('Đại học Cần Thơ', newCanvas.width / 2, 380);
+
+          // Download the combined image
+          const dataUrl = newCanvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `qr-code-${selectedQrDegree._id}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
       }
     }
   };
@@ -263,23 +265,7 @@ const DiplomaLookup = () => {
 
             const degreeId = result.getText().split('/').pop();
             try {
-              let token = localStorage.getItem('accessToken');
-              let response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              });
-
-              if (response.data.errCode === 1 && response.data.message.includes('token')) {
-                token = await refreshToken();
-                if (!token) return;
-                response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`, {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                });
-              }
-
+              const response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`);
               if (response.data.errCode === 0) {
                 setDegrees([response.data.data]);
                 setQrSuccess(true);
@@ -330,23 +316,7 @@ const DiplomaLookup = () => {
 
         const degreeId = result.getText().split('/').pop();
         try {
-          let token = localStorage.getItem('accessToken');
-          let response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (response.data.errCode === 1 && response.data.message.includes('token')) {
-            token = await refreshToken();
-            if (!token) return;
-            response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          }
-
+          const response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`);
           if (response.data.errCode === 0) {
             setDegrees([response.data.data]);
             setQrSuccess(true);
@@ -372,8 +342,9 @@ const DiplomaLookup = () => {
     setFormData({
       fullname: '',
       dob: '',
+      issuerId: '',
+      degreeTypeId: '',
       serialNumber: '',
-      registryNumber: '',
       captcha: '',
     });
     setDegrees([]);
@@ -382,6 +353,7 @@ const DiplomaLookup = () => {
     setQrSuccess(false);
     setError('');
     refreshCaptcha();
+    setDegreeTypes([]);
   };
 
   const closeModal = () => {
@@ -404,62 +376,99 @@ const DiplomaLookup = () => {
       <div className="row g-4 align-items-stretch">
         <div className="col-md-6 d-flex">
           <div className="card p-4 shadow-sm w-100 h-100">
+            <div className="mb-3">
+              <h6 className="fw-bold">Tra cứu văn bằng</h6>
+              <p className={styles.searchInstruction}>
+                Vui lòng nhập số hiệu văn bằng để tra cứu nhanh, hoặc điền đầy đủ thông tin bao gồm đơn vị cấp, loại văn bằng, họ tên, và ngày sinh. Điền mã bảo vệ để hoàn tất.
+              </p>
+            </div>
             <form onSubmit={handleSearch}>
-              <div className="mb-2">
-                <label className="form-label">Họ và tên</label>
-                <div className="input-group">
-                  <span className="input-group-text"><i className="fa-solid fa-user"></i></span>
-                  <input
-                    type="text"
-                    name="fullname"
-                    className="form-control"
-                    placeholder="Nhập họ và tên"
-                    value={formData.fullname}
-                    onChange={handleInputChange}
-                  />
+              <fieldset className={styles.detailedSearch}>
+                <legend>Tra cứu bằng thông tin</legend>
+                <div className="mb-2">
+                  <label className={`form-label ${styles.requiredLabel}`}>Đơn vị cấp</label>
+                  <div className="input-group">
+                    <span className="input-group-text"><i className="fa-solid fa-building"></i></span>
+                    <select
+                      name="issuerId"
+                      className="form-select"
+                      value={formData.issuerId}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Chọn đơn vị cấp</option>
+                      {issuers.map((issuer) => (
+                        <option key={issuer._id} value={issuer._id}>
+                          {issuer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div className="mb-2">
-                <label className="form-label">Ngày sinh</label>
-                <div className="input-group">
-                  <span className="input-group-text"><i className="fa-solid fa-calendar-days"></i></span>
-                  <input
-                    type="date"
-                    name="dob"
-                    className="form-control"
-                    value={formData.dob}
-                    onChange={handleInputChange}
-                  />
+                <div className="mb-2">
+                  <label className={`form-label ${styles.requiredLabel}`}>Loại văn bằng</label>
+                  <div className="input-group">
+                    <span className="input-group-text"><i className="fa-solid fa-graduation-cap"></i></span>
+                    <select
+                      name="degreeTypeId"
+                      className="form-select"
+                      value={formData.degreeTypeId}
+                      onChange={handleInputChange}
+                      disabled={!formData.issuerId}
+                    >
+                      <option value="">Chọn loại văn bằng</option>
+                      {degreeTypes.map((degreeType) => (
+                        <option key={degreeType._id} value={degreeType._id}>
+                          {degreeType.title} {degreeType.level ? `(${degreeType.level})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div className="mb-2">
-                <label className="form-label">Số hiệu</label>
-                <div className="input-group">
-                  <span className="input-group-text"><i className="fa-solid fa-tags"></i></span>
-                  <input
-                    type="text"
-                    name="serialNumber"
-                    className="form-control"
-                    placeholder="Nhập số hiệu"
-                    value={formData.serialNumber}
-                    onChange={handleInputChange}
-                  />
+                <div className="mb-2">
+                  <label className={`form-label ${styles.requiredLabel}`}>Họ và tên</label>
+                  <div className="input-group">
+                    <span className="input-group-text"><i className="fa-solid fa-user"></i></span>
+                    <input
+                      type="text"
+                      name="fullname"
+                      className="form-control"
+                      placeholder="Nhập họ và tên"
+                      value={formData.fullname}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="mb-2">
-                <label className="form-label">Số vào sổ</label>
-                <div className="input-group">
-                  <span className="input-group-text"><i className="fa-solid fa-user-secret"></i></span>
-                  <input
-                    type="text"
-                    name="registryNumber"
-                    className="form-control"
-                    placeholder="Nhập số vào sổ"
-                    value={formData.registryNumber}
-                    onChange={handleInputChange}
-                  />
+                <div className="mb-2">
+                  <label className={`form-label ${styles.requiredLabel}`}>Ngày sinh</label>
+                  <div className="input-group">
+                    <span className="input-group-text"><i className="fa-solid fa-calendar-days"></i></span>
+                    <input
+                      type="date"
+                      name="dob"
+                      className="form-control"
+                      value={formData.dob}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-              </div>
+              </fieldset>
+              <fieldset className={styles.serialSearch}>
+                <legend>Tra cứu bằng số hiệu</legend>
+                <div className="mb-2">
+                  <label className={`form-label ${styles.requiredLabel}`}>Số hiệu</label>
+                  <div className="input-group">
+                    <span className="input-group-text"><i className="fa-solid fa-tags"></i></span>
+                    <input
+                      type="text"
+                      name="serialNumber"
+                      className="form-control"
+                      placeholder="Nhập số hiệu"
+                      value={formData.serialNumber}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+              </fieldset>
               <div className="mb-3">
                 <label className="form-label">Mã bảo vệ</label>
                 <div className="d-flex align-items-center gap-2 flex-nowrap overflow-auto">
@@ -472,6 +481,7 @@ const DiplomaLookup = () => {
                       placeholder="Nhập mã"
                       value={formData.captcha}
                       onChange={handleInputChange}
+                      required
                     />
                   </div>
                   <button
@@ -492,10 +502,18 @@ const DiplomaLookup = () => {
               </div>
               {error && <div className="alert alert-danger">{error}</div>}
               <div className="d-flex justify-content-between gap-2 mt-3">
-                <button type="submit" className="btn btn-primary px-4" disabled={loading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary px-4"
+                  disabled={
+                    loading ||
+                    (!formData.serialNumber &&
+                      (!formData.issuerId || !formData.degreeTypeId || !formData.fullname || !formData.dob))
+                  }
+                >
                   <i className="fa-solid fa-magnifying-glass me-1"></i> Tra cứu
                 </button>
-                <button typeButton="button" className="btn btn-primary px-4" onClick={handleReset} disabled={loading}>
+                <button type="button" className="btn btn-primary px-4" onClick={handleReset} disabled={loading}>
                   <i className="fa-solid fa-rotate me-1"></i> Hoàn tác
                 </button>
               </div>
@@ -506,7 +524,7 @@ const DiplomaLookup = () => {
         <div className="col-md-6 d-flex">
           <div className="card p-4 shadow-sm w-100 h-100 d-flex flex-column justify-content-between">
             <div>
-              <h6 className={`${styles.detailproductQm} mb-3 pb-2 border-bottom text-center`}>
+              <h6 className="mb-3 pb-2 border-bottom text-center fw-bold">
                 QUÉT MÃ VĂN BẰNG
               </h6>
               <div
@@ -577,7 +595,6 @@ const DiplomaLookup = () => {
                     <th>Chuyên ngành</th>
                     <th>Cấp độ</th>
                     <th>Số hiệu</th>
-                    <th>Số vào sổ</th>
                     <th>Chi tiết</th>
                     <th>Mã QR</th>
                   </tr>
@@ -587,11 +604,10 @@ const DiplomaLookup = () => {
                     degrees.map((degree, index) => (
                       <tr key={degree._id}>
                         <td>{index + 1}</td>
-                        <td>{degree.title}</td>
-                        <td>{degree.major}</td>
-                        <td>{degree.level}</td>
+                        <td>{degree.degreeTypeName || 'N/A'}</td>
+                        <td>{degree.major || 'N/A'}</td>
+                        <td>{degree.level || 'N/A'}</td>
                         <td>{degree.serialNumber}</td>
-                        <td>{degree.registryNumber}</td>
                         <td>
                           <button
                             className="btn btn-sm btn-outline-secondary"
@@ -614,7 +630,7 @@ const DiplomaLookup = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8">Không tìm thấy văn bằng</td>
+                      <td colSpan="7">Không tìm thấy văn bằng</td>
                     </tr>
                   )}
                 </tbody>
@@ -632,16 +648,13 @@ const DiplomaLookup = () => {
                   <button type="button" className="btn-close" onClick={closeModal}></button>
                 </div>
                 <div className="modal-body">
-                  <p><strong>Tên văn bằng:</strong> {selectedDegree.title}</p>
-                  <p><strong>Chuyên ngành:</strong> {selectedDegree.major}</p>
-                  <p><strong>Cấp độ:</strong> {selectedDegree.level}</p>
+                  <p className={styles.universityTitle}>Đại học Cần Thơ</p>
+                  <p><strong>Tên văn bằng:</strong> {selectedDegree.degreeTypeName || 'N/A'}</p>
+                  <p><strong>Chuyên ngành:</strong> {selectedDegree.major || 'N/A'}</p>
+                  <p><strong>Cấp độ:</strong> {selectedDegree.level || 'N/A'}</p>
                   <p><strong>Ngày cấp:</strong> {new Date(selectedDegree.issueDate).toLocaleDateString()}</p>
                   <p><strong>Số hiệu:</strong> {selectedDegree.serialNumber}</p>
-                  <p><strong>Số vào sổ:</strong> {selectedDegree.registryNumber}</p>
-                  <p><strong>Người cấp:</strong> {selectedDegree.issuerId}</p>
-                  {selectedDegree.fileAttachment && (
-                    <p><strong>Tệp đính kèm:</strong> <a href={selectedDegree.fileAttachment} target="_blank" rel="noreferrer">Tải xuống</a></p>
-                  )}
+                  <p><strong>Đơn vị cấp:</strong> {selectedDegree.issuerName || 'N/A'}</p>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={closeModal}>
@@ -654,7 +667,7 @@ const DiplomaLookup = () => {
         )}
 
         {selectedQrDegree && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className={`modal fade show d-block qr-modal`} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
@@ -662,7 +675,8 @@ const DiplomaLookup = () => {
                   <button type="button" className="btn-close" onClick={closeQrModal}></button>
                 </div>
                 <div className="modal-body text-center">
-                  <p><strong>Đơn vị cấp văn bằng:</strong> CUSC (Trung tâm Công nghệ Phần mềm Cần Thơ)</p>
+                  <p className={styles.universityTitle}>Đại học Cần Thơ</p>
+                  <p><strong>Đơn vị cấp văn bằng:</strong> {selectedQrDegree.issuerName || 'CUSC'}</p>
                   <div ref={qrCanvasRef}>
                     <QRCodeCanvas value={`${WEBSITE_URL}/degree/${selectedQrDegree._id}`} size={200} />
                   </div>

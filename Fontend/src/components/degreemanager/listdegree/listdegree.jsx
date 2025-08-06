@@ -51,7 +51,7 @@ const ListDegree = () => {
 
   // Fetch issuers for filter dropdown (admin only)
   const fetchIssuers = useCallback(async () => {
-    if (user.role !== 'admin') return; // Only for admin
+    if (user.role !== 'admin') return;
     const token = getAccessToken();
     if (!token) return;
     try {
@@ -84,7 +84,7 @@ const ListDegree = () => {
       if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       if (filterStatus) params.status = filterStatus;
       if (user.role === 'admin' && filterIssuer) params.issuerId = filterIssuer;
-      if (user.role === 'manager' && user.issuerId) params.issuerId = user.issuerId; // Manager: filter by their issuerId
+      if (user.role === 'manager' && user.issuerId) params.issuerId = user.issuerId;
 
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/degrees/list`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -214,6 +214,7 @@ const ListDegree = () => {
         setDegrees(degrees.filter((d) => d._id !== deleteId));
         setSuccess('Xóa văn bằng thành công!');
         setShowDeleteModal(false);
+        setError('');
         if (degrees.length === 1 && currentPage > 1) handlePageChange(currentPage - 1);
       } else {
         setError(response.data.message || 'Không thể xóa văn bằng.');
@@ -222,9 +223,88 @@ const ListDegree = () => {
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Phiên đăng nhập hết hạn hoặc bạn không có quyền. Vui lòng đăng nhập lại.');
         navigate('/login');
+        setShowDeleteModal(false);
       } else {
         setError(err.response?.data?.message || 'Lỗi khi xóa văn bằng.');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle upload to Mega.nz
+  const handleUploadToMega = async (degreeId, fileAttachment) => {
+    setLoading(true);
+    setError('');
+    const token = getAccessToken();
+    if (!token) {
+      setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      navigate('/login');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/degree/${degreeId}/upload-to-mega`,
+        { fileAttachment },
+        {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.errCode === 0) {
+        setSuccess('Tải lên Mega.nz thành công!');
+        setDegrees(
+          degrees.map((d) =>
+            d._id === degreeId ? { ...d, cloudFile: response.data.data.cloudFile } : d
+          )
+        );
+      } else {
+        setError(response.data.message || 'Không thể tải lên Mega.nz.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Lỗi khi tải lên Mega.nz. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle re-upload to Mega.nz
+  const handleReUploadToMega = async (degreeId, fileAttachment) => {
+    setLoading(true);
+    setError('');
+    const token = getAccessToken();
+    if (!token) {
+      setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      navigate('/login');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/degree/${degreeId}/reupload-file`,
+        { fileAttachment },
+        {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.errCode === 0) {
+        setSuccess('Tải lại lên Mega.nz thành công!');
+        setDegrees(
+          degrees.map((d) =>
+            d._id === degreeId ? { ...d, cloudFile: response.data.data.cloudFile, fileAttachment: response.data.data.fileAttachment } : d
+          )
+        );
+      } else {
+        setError(response.data.message || 'Không thể tải lại lên Mega.nz.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Lỗi khi tải lại lên Mega.nz. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -274,11 +354,14 @@ const ListDegree = () => {
         <div className={styles.borderBox}>
           <h4 className={styles.pageTitle}>Danh sách văn bằng</h4>
 
-          {error && <div className={styles.alertDanger}>{error}</div>}
-          {success && <div className={styles.alertSuccess}>{success}</div>}
+          {success && !showDeleteModal && <div className={styles.alertSuccess}>{success}</div>}
+          {error && !showDeleteModal && <div className={styles.alertDanger}>{error}</div>}
           {loading && (
-            <div className={styles.loadingContainer}>
-              <div className={styles.spinner}></div>
+            <div className={styles.fullScreenLoading}>
+              <div className={styles.loadingContent}>
+                <div className={styles.spinner}></div>
+                <p className={styles.loadingText}>Đang tải...</p>
+              </div>
             </div>
           )}
 
@@ -291,6 +374,7 @@ const ListDegree = () => {
                 value={searchInput}
                 onChange={handleSearchChange}
                 aria-label="Tìm kiếm văn bằng"
+                disabled={loading}
               />
               <button
                 type="button"
@@ -307,6 +391,7 @@ const ListDegree = () => {
               value={filterStatus}
               onChange={handleStatusFilterChange}
               aria-label="Lọc theo trạng thái"
+              disabled={loading}
             >
               <option value="">Tất cả trạng thái</option>
               <option value="Pending">Chờ duyệt</option>
@@ -319,6 +404,7 @@ const ListDegree = () => {
                 value={filterIssuer}
                 onChange={handleIssuerFilterChange}
                 aria-label="Lọc theo đơn vị cấp"
+                disabled={loading}
               >
                 <option value="">Tất cả đơn vị cấp</option>
                 {issuers.map((issuer) => (
@@ -333,6 +419,7 @@ const ListDegree = () => {
               value={sortOrder}
               onChange={handleSortChange}
               aria-label="Sắp xếp theo ngày cấp"
+              disabled={loading}
             >
               <option value="desc">Mới nhất</option>
               <option value="asc">Cũ nhất</option>
@@ -363,6 +450,7 @@ const ListDegree = () => {
                     <th>Trạng thái</th>
                     <th>Loại văn bằng</th>
                     <th>Đơn vị cấp</th>
+                    <th>Tệp trên Cloud</th>
                     <th>Cập nhật</th>
                     <th>Xóa</th>
                   </tr>
@@ -374,9 +462,46 @@ const ListDegree = () => {
                       <td>{degree.serialNumber}</td>
                       <td>{degree.registryNumber}</td>
                       <td>{new Date(degree.issueDate).toLocaleDateString('vi-VN')}</td>
-                      <td>{degree.status === 'Pending' ? 'Chờ duyệt' : degree.status === 'Approved' ? 'Đã duyệt' : 'Đã từ chối'}</td>
+                      <td>
+                        {degree.status === 'Pending'
+                          ? 'Chờ duyệt'
+                          : degree.status === 'Approved'
+                          ? 'Đã duyệt'
+                          : 'Đã từ chối'}
+                      </td>
                       <td>{degree.degreeType?.title || 'N/A'}</td>
                       <td>{degree.issuer?.name || 'N/A'}</td>
+                      <td>
+                        {degree.status !== 'Approved' || !degree.fileAttachment ? (
+                          <span className={styles.notEligible}>
+                            <i className="fas fa-upload" title="Chưa đủ điều kiện tải lên"></i>
+                            Chưa đủ điều kiện
+                          </span>
+                        ) : degree.cloudFile ? (
+                          <>
+                            <span className={styles.uploadedIndicator}>
+                              <i className="fas fa-check-circle"></i> Đã tải lên
+                            </span>
+                            <button
+                              type="button"
+                              className={styles.btnReUpload}
+                              onClick={() => handleReUploadToMega(degree._id, degree.fileAttachment)}
+                              disabled={loading}
+                            >
+                              Tải lại
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.btnUpload}
+                            onClick={() => handleUploadToMega(degree._id, degree.fileAttachment)}
+                            disabled={loading}
+                          >
+                            Tải lên Mega
+                          </button>
+                        )}
+                      </td>
                       <td>
                         <button
                           type="button"
@@ -408,7 +533,9 @@ const ListDegree = () => {
             <div className={styles.customPagination}>
               <Link
                 to={`/listdegree?${buildPageUrl(currentPage - 1)}`}
-                className={`${styles.customPaginationButton} ${styles.arrow} ${currentPage === 1 ? styles.disabled : ''}`}
+                className={`${styles.customPaginationButton} ${styles.arrow} ${
+                  currentPage === 1 ? styles.disabled : ''
+                }`}
                 onClick={(e) => {
                   if (currentPage === 1) e.preventDefault();
                   else handlePageChange(currentPage - 1);
@@ -429,7 +556,9 @@ const ListDegree = () => {
                   <Link
                     key={page}
                     to={`/listdegree?${buildPageUrl(page)}`}
-                    className={`${styles.customPaginationButton} ${currentPage === page ? styles.active : ''}`}
+                    className={`${styles.customPaginationButton} ${
+                      currentPage === page ? styles.active : ''
+                    }`}
                     onClick={() => handlePageChange(page)}
                   >
                     {page}
@@ -438,7 +567,9 @@ const ListDegree = () => {
               )}
               <Link
                 to={`/listdegree?${buildPageUrl(currentPage + 1)}`}
-                className={`${styles.customPaginationButton} ${styles.arrow} ${currentPage === totalPages ? styles.disabled : ''}`}
+                className={`${styles.customPaginationButton} ${styles.arrow} ${
+                  currentPage === totalPages ? styles.disabled : ''
+                }`}
                 onClick={(e) => {
                   if (currentPage === totalPages) e.preventDefault();
                   else handlePageChange(currentPage + 1);
@@ -455,28 +586,47 @@ const ListDegree = () => {
                 <div className={styles.modalContent}>
                   <div className={styles.modalHeader}>
                     <h5 className={styles.modalTitle}>Xác nhận xóa</h5>
-                    <button type="button" className={styles.btnClose} onClick={handleCloseModal} aria-label="Close">
-                      &times;
+                    <button
+                      type="button"
+                      className={styles.btnClose}
+                      onClick={handleCloseModal}
+                      aria-label="Đóng"
+                      disabled={loading}
+                    >
+                      ×
                     </button>
                   </div>
                   <div className={styles.modalBody}>
-                    {error && <div className={styles.alertDanger}>{error}</div>}
                     <p>Bạn có chắc muốn xóa văn bằng này không?</p>
-                    <p>Vui lòng nhập <strong>XÁC NHẬN XÓA {deleteSerialNumber}</strong> để tiếp tục:</p>
+                    <p>
+                      Vui lòng nhập <strong>XÁC NHẬN XÓA {deleteSerialNumber}</strong> để tiếp tục:
+                    </p>
                     <input
                       type="text"
                       className={styles.modalInput}
                       value={deleteInput}
                       onChange={(e) => setDeleteInput(e.target.value)}
                       placeholder={`Nhập XÁC NHẬN XÓA ${deleteSerialNumber}`}
-                      aria-label="Delete confirmation"
+                      aria-label="Xác nhận xóa"
+                      disabled={loading}
                     />
+                    {error && <div className={styles.alertDanger}>{error}</div>}
                   </div>
                   <div className={styles.modalFooter}>
-                    <button type="button" className={styles.btnSecondary} onClick={handleCloseModal} disabled={loading}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      onClick={handleCloseModal}
+                      disabled={loading}
+                    >
                       Hủy
                     </button>
-                    <button type="button" className={styles.btnDanger} onClick={handleDeleteConfirm} disabled={loading}>
+                    <button
+                      type="button"
+                      className={styles.btnDanger}
+                      onClick={handleDeleteConfirm}
+                      disabled={loading}
+                    >
                       Xóa
                     </button>
                   </div>

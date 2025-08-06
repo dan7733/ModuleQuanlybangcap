@@ -370,7 +370,7 @@ const AddDegree = () => {
     <div className="bg-light p-4">
       <div className="container bg-white p-4 rounded shadow-sm">
         <div className={`d-flex gap-2 mb-3 flex-wrap ${styles.actionButtons}`}>
-          <button className={`btn ${styles.bthThembangcap}`} onClick={() => navigate('/diploma-manager')}>
+          <button className={`btn ${styles.bthThembangcap}`} onClick={() => navigate('/listdegree')}>
             <i className="fas fa-arrow-left"></i> Quay lại
           </button>
           <button className={`btn ${styles.bthThembangcap}`}>

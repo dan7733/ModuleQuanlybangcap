@@ -9,21 +9,30 @@ const Header = () => {
   const [isDiplomaMenuOpen, setIsDiplomaMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isIssuerMenuOpen, setIsIssuerMenuOpen] = useState(false);
+  const [isDegreeMenuOpen, setIsDegreeMenuOpen] = useState(false); // New state for degree menu
 
   const handleNavClick = (menu) => {
-    console.log('Nav clicked:', menu, 'Current isDiplomaMenuOpen:', isDiplomaMenuOpen, 'Current isUserMenuOpen:', isUserMenuOpen, 'Current isIssuerMenuOpen:', isIssuerMenuOpen);
+    console.log('Nav clicked:', menu);
     if (menu === 'diploma') {
       setIsDiplomaMenuOpen((prev) => !prev);
       setIsUserMenuOpen(false);
       setIsIssuerMenuOpen(false);
+      setIsDegreeMenuOpen(false);
     } else if (menu === 'user') {
       setIsUserMenuOpen((prev) => !prev);
       setIsDiplomaMenuOpen(false);
       setIsIssuerMenuOpen(false);
+      setIsDegreeMenuOpen(false);
     } else if (menu === 'issuer') {
       setIsIssuerMenuOpen((prev) => !prev);
       setIsDiplomaMenuOpen(false);
       setIsUserMenuOpen(false);
+      setIsDegreeMenuOpen(false);
+    } else if (menu === 'degree') {
+      setIsDegreeMenuOpen((prev) => !prev);
+      setIsDiplomaMenuOpen(false);
+      setIsUserMenuOpen(false);
+      setIsIssuerMenuOpen(false);
     }
   };
 
@@ -33,11 +42,14 @@ const Header = () => {
     setIsDiplomaMenuOpen(false);
     setIsUserMenuOpen(false);
     setIsIssuerMenuOpen(false);
+    setIsDegreeMenuOpen(false);
   };
 
   const isAuthorizedForDiploma = user?.auth && ['admin', 'certifier'].includes(user?.role);
   const isAuthorizedForUser = user?.auth && user?.role === 'admin';
   const isAuthorizedForIssuer = user?.auth && user?.role === 'admin';
+  const isAuthorizedForDegree = user?.auth && ['admin', 'manager'].includes(user?.role); // For degree management
+  const isAuthorizedForLogs = user?.auth && user?.role === 'admin'; // For server logs
 
   return (
     <>
@@ -89,6 +101,22 @@ const Header = () => {
                 >
                   QUẢN LÝ ĐƠN VỊ
                 </button>
+              )}
+              {isAuthorizedForDegree && (
+                <button
+                  className={`${styles.navLink} btn btn-link`}
+                  onClick={() => handleNavClick('degree')}
+                >
+                  QUẢN LÝ VĂN BẰNG
+                </button>
+              )}
+              {isAuthorizedForLogs && (
+                <Link
+                  className={`${styles.navLink} btn btn-link`}
+                  to="/admin/logs"
+                >
+                  QUẢN LÝ LOG
+                </Link>
               )}
             </div>
           </div>
@@ -148,6 +176,39 @@ const Header = () => {
             onClick={() => handleSubClick('/listissuer')}
           >
             Danh sách đơn vị
+          </div>
+        </div>
+      )}
+
+      {isAuthorizedForDegree && isDegreeMenuOpen && (
+        <div className={`${styles.Subtab} d-flex text-white text-center border-top`}>
+          <div
+            className="flex-fill py-2 border-end"
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleSubClick('/adddegree')}
+          >
+            Tạo văn bằng
+          </div>
+          <div
+            className="flex-fill py-2 border-end"
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleSubClick('/adddegreeimage')}
+          >
+            Tải lên hình ảnh
+          </div>
+          <div
+            className="flex-fill py-2 border-end"
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleSubClick('/adddegreeexcel')}
+          >
+            Tải lên Excel
+          </div>
+          <div
+            className="flex-fill py-2"
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleSubClick('/listdegree')}
+          >
+            Danh sách văn bằng
           </div>
         </div>
       )}

@@ -20,6 +20,8 @@ import AddIssuer from '../components/issuermanager/addissuer/addissuer'; // Ensu
 import ListIssuer from '../components/issuermanager/listissuer/listissuer';
 import UpdateIssuer from '../components/issuermanager/updateissuer/updateissuer'; // Ensure the path is correct
 import ListDegree from '../components/degreemanager/listdegree/listdegree';
+import ServerLog from '../components/serverlog/serverlog'; // Ensure the path is correct'
+import UpdateDegree from '../components/degreemanager/updatedegree/updatedegree'; // Ensure the path is correct
 const HomePage = () => {
   return (
     <> 
@@ -40,6 +42,10 @@ export const router = createBrowserRouter([
       {
         path: "login",
         element: <Login />
+      },
+      {
+        path: "admin/logs",
+        element: <ServerLog />
       },
       {
         path: "forgot-password",
@@ -101,9 +107,13 @@ export const router = createBrowserRouter([
         path: 'adddegreeexcel', // New route
         element: <AddDegreeExcel />,
       },
-    {
+      {
         path: 'listdegree', // New route
         element: <ListDegree />,
+      },
+      {
+        path: 'updatedegree/:id', // New route
+        element: <UpdateDegree />,
       },
       {
         path: 'account',

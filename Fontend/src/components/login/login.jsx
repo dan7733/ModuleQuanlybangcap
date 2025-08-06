@@ -12,7 +12,7 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
-  const { loginContext } = useContext(Context);
+  const { loginContext, refreshAccessToken } = useContext(Context);
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -21,7 +21,7 @@ const Login = () => {
 
   const handleGoogleLogin = useCallback(
     async (response) => {
-      console.log('Google response:', response);
+      console.log('Google response:', response, { timestamp: new Date().toISOString() });
       try {
         const { credential } = response;
         if (!credential || typeof credential !== 'string' || credential.split('.').length !== 3) {
@@ -29,14 +29,14 @@ const Login = () => {
         }
 
         const payload = JSON.parse(decodeURIComponent(escape(atob(credential.split('.')[1]))));
-        console.log('Decoded payload:', payload);
+        console.log('Decoded payload:', payload, { timestamp: new Date().toISOString() });
 
         const googleId = payload.sub;
         const email = payload.email;
         const fullname = payload.name;
 
         const googleResponse = await loginWithGoogleAPI(googleId, email, fullname);
-        console.log('Google API response:', googleResponse.data);
+        console.log('Google API response:', googleResponse.data, { timestamp: new Date().toISOString() });
         if (googleResponse.data.errCode !== 0) {
           setErrorMessage(googleResponse.data.message);
           return;
@@ -49,58 +49,60 @@ const Login = () => {
           avatar: googleResponse.data.userDetails.avatar,
         };
 
-        loginContext(userData, true);
+        await loginContext(userData, true);
 
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Refresh token if it's close to expiring
+        await refreshAccessToken();
 
         const userResponse = await account();
-        console.log('Account API response:', userResponse.data);
+        console.log('Account API response:', userResponse.data, { timestamp: new Date().toISOString() });
         if (!userResponse.data || userResponse.data.errCode !== 0) {
           throw new Error(userResponse.data.message || 'Invalid account data');
         }
 
-        loginContext(
+        await loginContext(
           {
             ...userData,
             username: userResponse.data.data.user,
             fullname: userResponse.data.data.fullname,
             avatar: userResponse.data.data.avatar,
+            role: userResponse.data.data.role,
           },
           true
         );
         navigate('/');
       } catch (err) {
-        console.error('Google login error:', err);
+        console.error('Google login error:', err, { timestamp: new Date().toISOString() });
         setErrorMessage('Đăng nhập Google không thành công. Vui lòng thử lại!');
       }
     },
-    [loginContext, navigate]
+    [loginContext, navigate, refreshAccessToken]
   );
 
   useEffect(() => {
     if (window.google) {
-      console.log('Google API loaded successfully');
+      console.log('Google API loaded successfully', { timestamp: new Date().toISOString() });
       window.google.accounts.id.initialize({
         client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
         callback: handleGoogleLogin,
       });
       const buttonDiv = document.getElementById('googleSignInButton');
       if (buttonDiv) {
-        console.log('Rendering Google button');
+        console.log('Rendering Google button', { timestamp: new Date().toISOString() });
         window.google.accounts.id.renderButton(buttonDiv, {
           theme: 'outline',
           size: 'large',
         });
       } else {
-        console.error('Google button div not found');
+        console.error('Google button div not found', { timestamp: new Date().toISOString() });
       }
     } else {
-      console.error('Google API not loaded');
+      console.error('Google API not loaded', { timestamp: new Date().toISOString() });
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.onload = () => {
-        console.log('Google API script loaded dynamically');
+        console.log('Google API script loaded dynamically', { timestamp: new Date().toISOString() });
         window.google.accounts.id.initialize({
           client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
           callback: handleGoogleLogin,
@@ -140,13 +142,13 @@ const Login = () => {
       const loginResponse = await login(email, password);
 
       if (!loginResponse || !loginResponse.data || typeof loginResponse.data.errCode !== 'number') {
-        console.error('Invalid login response:', loginResponse);
+        console.error('Invalid login response:', loginResponse, { timestamp: new Date().toISOString() });
         setErrorMessage('Phản hồi từ server không hợp lệ. Vui lòng thử lại!');
         return;
       }
 
       if (loginResponse.data.errCode !== 0) {
-        console.log('Login failed:', loginResponse.data);
+        console.log('Login failed:', loginResponse.data, { timestamp: new Date().toISOString() });
         const errorMessages = {
           1: 'Tài khoản hoặc mật khẩu không đúng',
           2: 'Tài khoản đã bị khóa hoặc không hoạt động',
@@ -159,20 +161,17 @@ const Login = () => {
         accessToken: loginResponse.data.accessToken,
       };
 
-      loginContext(userData, remember);
+      await loginContext(userData, remember);
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      console.log('User data after login:', userData);
+      // Refresh token if it's close to expiring
+      await refreshAccessToken();
 
-      let userResponse;
-      if (loginResponse.data.errCode === 0) {
-        userResponse = await account();
-        if (!userResponse.data || userResponse.data.errCode !== 0) {
-          throw new Error('Không lấy được thông tin tài khoản');
-        }
+      const userResponse = await account();
+      if (!userResponse.data || userResponse.data.errCode !== 0) {
+        throw new Error('Không lấy được thông tin tài khoản');
       }
 
-      loginContext(
+      await loginContext(
         {
           ...userData,
           email: userResponse.data.data.user,
@@ -189,6 +188,7 @@ const Login = () => {
         message: err.message,
         response: err.response ? err.response.data : null,
         status: err.response ? err.response.status : null,
+        timestamp: new Date().toISOString(),
       });
 
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {

@@ -196,7 +196,7 @@ const AddDegreeExcel = () => {
           <button
             type="button"
             className={styles.button}
-            onClick={() => navigate("/diploma-manager")}
+            onClick={() => navigate("/listdegree")}
             disabled={loading}
           >
             <i className="fas fa-arrow-left"></i> Quay Lại

@@ -222,6 +222,7 @@ const ListUser = () => {
         setUsers(users.filter((u) => u._id !== deleteId));
         setSuccess('Xóa người dùng thành công!');
         setShowDeleteModal(false);
+        setError('');
         if (users.length === 1 && currentPage > 1) {
           handlePageChange(currentPage - 1);
         }
@@ -232,6 +233,7 @@ const ListUser = () => {
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Phiên đăng nhập hết hạn hoặc bạn không có quyền. Vui lòng đăng nhập lại.');
         navigate('/login');
+        setShowDeleteModal(false);
       } else {
         setError(err.response?.data?.message || 'Lỗi khi xóa người dùng.');
       }
@@ -292,8 +294,8 @@ const ListUser = () => {
         <div className={styles.borderBox}>
           <h4 className={styles.pageTitle}>Danh sách người dùng</h4>
 
-          {error && <div className={styles.alertDanger}>{error}</div>}
-          {success && <div className={styles.alertSuccess}>{success}</div>}
+          {success && !showDeleteModal && <div className={styles.alertSuccess}>{success}</div>}
+          {error && !showDeleteModal && <div className={styles.alertDanger}>{error}</div>}
           {loading && (
             <div className={styles.loadingContainer}>
               <div className={styles.spinner}></div>
@@ -466,13 +468,12 @@ const ListUser = () => {
                       type="button"
                       className={styles.btnClose}
                       onClick={handleCloseModal}
-                      aria-label="Close"
+                      aria-label="Đóng"
                     >
-                      &times;
+                      ×
                     </button>
                   </div>
                   <div className={styles.modalBody}>
-                    {error && <div className={styles.alertDanger}>{error}</div>}
                     <p>Bạn có chắc muốn xóa người dùng này không?</p>
                     <p>
                       Vui lòng nhập <strong>XÁC NHẬN XÓA {deleteEmail}</strong> để tiếp tục:
@@ -482,9 +483,10 @@ const ListUser = () => {
                       className={styles.modalInput}
                       value={deleteInput}
                       onChange={(e) => setDeleteInput(e.target.value)}
-                      placeholder={`Nhập XÁC NHẠN XÓA ${deleteEmail}`}
-                      aria-label="Delete confirmation"
+                      placeholder={`Nhập XÁC NHẬN XÓA ${deleteEmail}`}
+                      aria-label="Xác nhận xóa"
                     />
+                    {error && <div className={styles.alertDanger}>{error}</div>}
                   </div>
                   <div className={styles.modalFooter}>
                     <button

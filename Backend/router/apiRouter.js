@@ -7,9 +7,12 @@ import degreeController from '../controllers/degreeController';
 import userController from '../controllers/userController';
 import degreetypeController from '../controllers/degreetypeController';
 import issuerController from '../controllers/issuerController';
+import logController from '../controllers/logController';
+import cloudController from '../controllers/cloundController';
 const router = express.Router();
 
 const initAPIRoute = (app) => {
+  
   // Login and logout
   router.post('/login', loginController.userLoginAPI);
   router.get('/logout', authMiddleware.userMiddlewareAPI, loginController.userLogoutAPI);
@@ -17,6 +20,40 @@ const initAPIRoute = (app) => {
   // Token refresh and account info
   router.get('/refresh-token', authMiddleware.refreshTokenAPI);
   router.get('/account', authMiddleware.userMiddlewareAPI, authMiddleware.getAccountAPI);
+
+
+  // cloud storage
+    router.post(
+  '/degree/:degreeId/upload-to-mega',
+  authMiddleware.userMiddlewareAPI,
+  authMiddleware.managerMiddlewareAPI,
+  cloudController.uploadDegreeToMegaAPI
+  );
+
+  router.post(
+    '/degree/:degreeId/sync-file',
+    authMiddleware.userMiddlewareAPI,
+    authMiddleware.managerMiddlewareAPI,
+    cloudController.syncDegreeFileAPI
+  );
+  // tải lại local lên mega
+  router.post('/degree/:id/reupload-file', authMiddleware.managerMiddlewareAPI, cloudController.reuploadDegreeFileAPI);
+
+  router.put(
+  '/degree/:id',
+  authMiddleware.userMiddlewareAPI,
+  authMiddleware.managerMiddlewareAPI,
+  upload('degrees').single('fileAttachment'),
+  degreeController.updateDegreeAPI
+  );
+
+  router.get('/public/degree-types/by-issuer', degreeController.getDegreeTypesByIssuerAPI); // API public lấy danh sách loại văn bằng theo issuerId
+  router.get('/public/issuers', issuerController.getPublicIssuersAPI); // API public lấy danh sách đơn vị cấp
+
+  // server log
+  router.get('/logs/files', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, logController.getLogFilesAPI);
+  router.get('/logs/:filename', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, logController.getLogContentAPI);
+
 
   // Google login
   router.post('/google', loginController.googleLoginAPI);
@@ -28,8 +65,8 @@ const initAPIRoute = (app) => {
 
   // Degree management
   // Lấy thông tin văn bằng theo ID
-  router.get('/degree/:id', degreeController.getDegreeByIdAPI);
-
+  router.get('/degree/:id', authMiddleware.userMiddlewareAPI, authMiddleware.managerMiddlewareAPI, degreeController.getDegreeByIdAPI);
+  router.get('/approveddegree/:id', degreeController.getApprovedDegreeByIdAPI);
   // Lấy danh sách văn bằng theo bộ lọc
   router.get('/degrees', degreeController.getDegreesByFilterAPI);
 

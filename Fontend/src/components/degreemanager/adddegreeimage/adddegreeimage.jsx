@@ -531,7 +531,7 @@ const AddDegreeImage = () => {
             <button
               type="button"
               className={styles.selectButton}
-              onClick={() => navigate('/diploma-manager')}
+              onClick={() => navigate('/listdegree')}
               disabled={loading}
             >
               <i className="fas fa-arrow-left"></i> Quay Lại

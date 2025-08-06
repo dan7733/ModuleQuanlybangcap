@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Degree, getApprovedDegreeById, getApprovedDegreesByFilter, createDegree, getListDegrees, deleteDegree } from '../models/degreeModel.js';
+import { Degree, getDegreeById, updateDegree, getApprovedDegreeById, getApprovedDegreesByFilter, createDegree, getListDegrees, deleteDegree } from '../models/degreeModel.js';
 import logger from '../configs/logger.js';
 import { fetchDegreeTypesByIssuer } from '../models/degreetypeModel.js';
 import fs from 'fs';
@@ -7,6 +7,7 @@ import path from 'path';
 import axios from 'axios';
 import ExcelJS from 'exceljs';
 import userModel from '../models/userModel.js';
+import { deleteFromMega } from '../configs/uploadToMega.js';
 // Hàm xóa ảnh
 const deleteImage = (filename) => {
     if (!filename) return;
@@ -20,7 +21,7 @@ const deleteImage = (filename) => {
 };
 
 
-const getDegreeByIdAPI = async (req, res) => {
+const getApprovedDegreeByIdAPI = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -39,25 +40,76 @@ const getDegreeByIdAPI = async (req, res) => {
 };
 
 const getDegreesByFilterAPI = async (req, res) => {
-  const { serialNumber, registryNumber, issuerId, level } = req.query;
+  const { serialNumber, registryNumber, issuerId, level, fullname, dob, degreeTypeId } = req.query;
   const query = { status: 'Approved' };
 
-  if (serialNumber) query.serialNumber = serialNumber;
-  if (registryNumber) query.registryNumber = registryNumber;
-  if (issuerId) {
+  // If searching by serialNumber or registryNumber
+  if (serialNumber) {
+    query.serialNumber = serialNumber.trim();
+  }
+  if (registryNumber) {
+    query.registryNumber = registryNumber.trim();
+  }
+
+  // If performing a detailed search (no serialNumber or registryNumber)
+  if (!serialNumber && !registryNumber) {
+    // Check for required fields
+    if (!fullname || !dob || !issuerId || !degreeTypeId) {
+      logger.warn('Missing required fields for detailed search', { query: req.query, user: req.user?.email });
+      return res.status(400).json({
+        errCode: 1,
+        message: 'Please provide all required fields: full name, date of birth, issuer, and degree type',
+      });
+    }
+
+    // Validate input formats
     if (!mongoose.isValidObjectId(issuerId)) {
       logger.warn(`Invalid issuerId: ${issuerId}`, { user: req.user?.email });
-      return res.status(400).json({ errCode: 1, message: 'Invalid issuerId' });
+      return res.status(400).json({ errCode: 1, message: 'Invalid issuer ID' });
     }
+    if (!mongoose.isValidObjectId(degreeTypeId)) {
+      logger.warn(`Invalid degreeTypeId: ${degreeTypeId}`, { user: req.user?.email });
+      return res.status(400).json({ errCode: 1, message: 'Invalid degree type ID' });
+    }
+    if (!fullname.trim()) {
+      logger.warn('Empty fullname provided', { user: req.user?.email });
+      return res.status(400).json({ errCode: 1, message: 'Full name cannot be empty' });
+    }
+
+    // Validate and normalize date of birth
+    try {
+      const dobDate = new Date(dob);
+      if (isNaN(dobDate.getTime())) {
+        logger.warn(`Invalid dob format: ${dob}`, { user: req.user?.email });
+        return res.status(400).json({ errCode: 1, message: 'Invalid date of birth' });
+      }
+      // Normalize to UTC date range (ignore time and timezone)
+      const startOfDay = new Date(Date.UTC(dobDate.getUTCFullYear(), dobDate.getUTCMonth(), dobDate.getUTCDate()));
+      const endOfDay = new Date(Date.UTC(dobDate.getUTCFullYear(), dobDate.getUTCMonth(), dobDate.getUTCDate() + 1));
+      query.recipientDob = {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      };
+    } catch (error) {
+      logger.warn(`Error parsing dob: ${dob}`, { error, user: req.user?.email });
+      return res.status(400).json({ errCode: 1, message: 'Error processing date of birth' });
+    }
+
+    // Normalize fullname for Unicode and whitespace
+    const normalizedFullname = fullname.trim().normalize('NFC');
+    query.recipientName = { $regex: `^${normalizedFullname}$`, $options: 'i' }; // Exact match (case-insensitive)
     query.issuerId = issuerId;
+    query.degreeTypeId = degreeTypeId;
+    if (level) {
+      query.level = { $regex: level, $options: 'i' };
+    }
   }
-  if (level) query.level = { $regex: level, $options: 'i' };
 
   try {
     const degrees = await getApprovedDegreesByFilter(query);
     if (!degrees || degrees.length === 0) {
-      logger.warn(`No approved degrees found with provided filters`, { query, user: req.user?.email });
-      return res.status(404).json({ errCode: 1, message: 'No approved degrees found' });
+      logger.info(`No approved degrees found with provided filters`, { query, user: req.user?.email });
+      return res.status(200).json({ errCode: 0, message: 'No matching degrees found', data: [] });
     }
 
     logger.info(`Approved degrees fetched successfully`, { query, count: degrees.length, user: req.user?.email });
@@ -212,28 +264,45 @@ const extractCertificateInfo = async (filePath) => {
         ]
       }]
     };
-    // Gửi yêu cầu tới Gemini API
-    const { status, data } = await axios.post(url, payload, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 30000 // 30 giây
-    });
-    // Kiểm tra phản hồi
-    if (status !== 200) {
-      throw new Error(`Gemini API request failed with status ${status}`);
-    }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error('Invalid response format from Gemini API: No text found');
-    }
+    // cơ chế retry cho API 3 lần
+    const maxRetries = 3;
+    let attempt = 1;
+    while (attempt <= maxRetries) {
+      try {
+        const { status, data } = await axios.post(url, payload, {
+          headers: { 'Content-Type': 'application/json' },
+          // Thêm timeout để tránh treo
+          timeout: 30000 // 30 seconds
+        });
 
-    logger.info('Extracted text from Gemini API', { text });
-    return text;
+        if (status !== 200) {
+          throw new Error(`Gemini API request failed with status ${status}`);
+        }
+
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          throw new Error('Invalid response format from Gemini API: No text found');
+        }
+
+        logger.info('Extracted text from Gemini API', { text });
+        return text;
+      } catch (error) {
+        if (error.response?.status === 503 && attempt < maxRetries) {
+          logger.warn(`Gemini API 503 error, retrying (${attempt}/${maxRetries})`, { error: error.message });
+          attempt++;
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+          continue;
+        }
+        throw error;
+      }
+    }
   } catch (error) {
     logger.error('Error extracting certificate info', { error: error.message, stack: error.stack });
-    throw error;
+    throw new Error(`Failed to extract certificate info: ${error.message}`);
   }
 };
+
 
 // Hàm parse text thành JSON
 const parseCertificateTextToJson = async (text, degreeTypeId) => {
@@ -395,6 +464,10 @@ const extractDegreeFromImageAPI = async (req, res) => {
     const missingFields = requiredFields.filter(field => !extractedData[field]);
 
     if (missingFields.length > 0) {
+    if (finalFilename) {
+        deleteImage(finalFilename); // Delete file if required fields are missing
+        logger.info(`Deleted file due to missing required fields: ${finalFilename}`, { missingFields, user: req.user?.email });
+      }
       logger.info('Extracted data incomplete, returning to frontend', { missingFields, user: req.user?.email });
       return res.status(200).json({
         errCode: 1,
@@ -757,7 +830,31 @@ const deleteDegreeAPI = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
+
+    // Call deleteDegree to remove the degree from the database
     const result = await deleteDegree(id, userId);
+
+    // Delete local file if it exists
+    if (result.fileAttachment) {
+      try {
+        deleteImage(result.fileAttachment);
+      } catch (error) {
+        logger.warn(`Failed to delete local file: ${result.fileAttachment}`, { error: error.message });
+        // Continue execution even if local file deletion fails
+      }
+    }
+
+    // Delete cloud file if it exists
+    if (result.cloudFile) {
+      try {
+        await deleteFromMega(result.cloudFile);
+        logger.info(`Deleted cloud file: ${result.cloudFile}`);
+      } catch (error) {
+        logger.warn(`Failed to delete cloud file: ${result.cloudFile}`, { error: error.message });
+        // Continue execution even if cloud file deletion fails
+      }
+    }
+
     logger.info(`Degree deleted successfully`, { id, user: req.user?.email });
     return res.status(200).json({ errCode: 0, message: result.message });
   } catch (error) {
@@ -766,14 +863,176 @@ const deleteDegreeAPI = async (req, res) => {
   }
 };
 
+const updateDegreeAPI = async (req, res) => {
+  try {
+    // Extract id from req.params
+    const id = req.params.id; // Changed from destructuring to direct access for clarity
+    if (!id) {
+      logger.error('Degree ID is missing in request parameters', { user: req.user?.email });
+      return res.status(400).json({
+        errCode: 1,
+        message: 'Degree ID is missing in request parameters',
+      });
+    }
+
+    const userId = req.user.userId;
+    const {
+      recipientName,
+      recipientDob,
+      placeOfBirth,
+      level,
+      degreeTypeId,
+      issueDate,
+      serialNumber,
+      registryNumber,
+      placeOfIssue,
+      signer,
+      issuerId,
+      email,
+    } = req.body;
+    let fileAttachment = req.file ? req.file.filename : null;
+
+    // Validate user
+    if (!email || email !== req.user.email) {
+      if (req.file) deleteImage(req.file.filename);
+      logger.error(`Email ${email} does not match authenticated user ${req.user.email}`, { userId, degreeId: id });
+      return res.status(403).json({
+        errCode: 1,
+        message: 'Email does not match authenticated user',
+      });
+    }
+
+    const user = await userModel.getUserByEmailAPI(email);
+    if (!user) {
+      if (req.file) deleteImage(req.file.filename);
+      logger.error(`User not found with email: ${email}`, { userId, degreeId: id });
+      return res.status(400).json({
+        errCode: 1,
+        message: 'User not found with provided email',
+      });
+    }
+
+    // Validate degree ID
+    if (!mongoose.isValidObjectId(id)) {
+      if (req.file) deleteImage(req.file.filename);
+      logger.error(`Invalid Degree ID: ${id}`, { userId, email });
+      return res.status(400).json({
+        errCode: 1,
+        message: 'Invalid Degree ID',
+      });
+    }
+
+    // Check if degree exists and get old fileAttachment for cleanup
+    const existingDegree = await Degree.findById(id);
+    if (!existingDegree) {
+      if (req.file) deleteImage(req.file.filename);
+      logger.error(`Degree not found with id: ${id}`, { userId, email });
+      return res.status(404).json({
+        errCode: 1,
+        message: 'Degree not found',
+      });
+    }
+
+    // Rename file if provided
+    if (req.file && serialNumber && issueDate) {
+      try {
+        const formattedDate = new Date(issueDate);
+        if (isNaN(formattedDate)) {
+          logger.warn(`Invalid issueDate for renaming: ${issueDate}`, { userId, email, degreeId: id });
+          // Continue without renaming, keep original filename
+        } else {
+          const dateStr = formattedDate.toISOString().slice(0, 10).replace(/-/g, '');
+          const ext = path.extname(req.file.filename);
+          const finalFilename = `${serialNumber}_${dateStr}${ext}`;
+          const oldPath = path.resolve('images/degrees', req.file.filename);
+          const newPath = path.resolve('images/degrees', finalFilename);
+          if (fs.existsSync(oldPath)) {
+            fs.renameSync(oldPath, newPath);
+            logger.info(`Renamed file from ${req.file.filename} to ${finalFilename}`, { userId, email, degreeId: id });
+            fileAttachment = finalFilename;
+
+            // Delete old fileAttachment if it exists and is different
+            if (existingDegree.fileAttachment && existingDegree.fileAttachment !== finalFilename) {
+              deleteImage(existingDegree.fileAttachment);
+              logger.info(`Deleted old file: ${existingDegree.fileAttachment}`, { userId, email, degreeId: id });
+            }
+          } else {
+            logger.warn(`Original file not found for renaming: ${oldPath}`, { userId, email, degreeId: id });
+          }
+        }
+      } catch (error) {
+        logger.warn(`Failed to rename file ${req.file.filename}: ${error.message}`, { userId, email, degreeId: id });
+        // Continue without renaming, keep original filename
+      }
+    }
+
+    // Prepare degree data
+    const degreeData = {
+      recipientName,
+      recipientDob,
+      placeOfBirth,
+      level,
+      degreeTypeId,
+      issueDate,
+      serialNumber,
+      registryNumber,
+      placeOfIssue,
+      signer,
+      fileAttachment,
+      issuerId,
+    };
+
+    // Update degree
+    const updatedDegree = await updateDegree(id, degreeData, userId, issuerId);
+    logger.info(`Degree updated successfully`, { degreeId: id, user: req.user.email, updatedFields: degreeData });
+    return res.status(200).json({
+      errCode: 0,
+      message: 'Degree updated successfully',
+      data: updatedDegree,
+    });
+  } catch (error) {
+    if (req.file) deleteImage(req.file.filename);
+    logger.error(`Error updating degree with id: ${req.params.id || 'unknown'}`, {
+      error: error.message,
+      stack: error.stack,
+      user: req.user?.email,
+      degreeData: req.body,
+      file: req.file ? req.file.filename : null,
+    });
+    return res.status(400).json({
+      errCode: 1,
+      message: error.message || 'Error updating degree',
+    });
+  }
+};
+
+const getDegreeByIdAPI = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const degree = await getDegreeById(id);
+    if (!degree) {
+      logger.warn(`Approved degree not found for id: ${id}`, { user: req.user?.email });
+      return res.status(404).json({ errCode: 1, message: 'Approved degree not found' });
+    }
+
+    logger.info(`Approved degree fetched successfully`, { id, user: req.user?.email });
+    return res.status(200).json({ errCode: 0, data: degree });
+  } catch (error) {
+    logger.error(`Error fetching approved degree by id: ${id}`, { error, user: req.user?.email });
+    return res.status(500).json({ errCode: 1, message: 'Internal server error' });
+  }
+};
 
 export default {
-  getDegreeByIdAPI,
+  getApprovedDegreeByIdAPI,
   getDegreesByFilterAPI,
   createDegreeAPI,
   getDegreeTypesByIssuerAPI,
   extractDegreeFromImageAPI,
   importDegreesFromExcel,
   getListDegreesAPI,
-  deleteDegreeAPI
+  deleteDegreeAPI,
+  updateDegreeAPI,
+  getDegreeByIdAPI
 };

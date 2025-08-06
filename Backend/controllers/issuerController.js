@@ -214,11 +214,37 @@ const getIssuerByIdAPI = async (req, res) => {
   }
 };
 
+const getPublicIssuersAPI = async (req, res) => {
+  try {
+    const issuers = await Issuermodel.getIssuers();
+    logger.info(`Fetched ${issuers.length} issuers by anonymous user`);
+    return res.status(200).json({
+      errCode: 0,
+      message: 'Lấy danh sách đơn vị cấp thành công',
+      data: issuers,
+    });
+  } catch (error) {
+    logger.error(`Error fetching issuers`, {
+      error: {
+        message: error.message,
+        stack: error.stack,
+      },
+      user: 'anonymous',
+    });
+    return res.status(500).json({
+      errCode: 1,
+      message: error.message || 'Lỗi khi lấy danh sách đơn vị cấp',
+      data: [],
+    });
+  }
+};
+
 export default {
   createIssuerAPI,
   getIssuersAPI,
   deleteIssuerAPI,
   getListIssuerAPI,
   updateIssuerAPI,
-  getIssuerByIdAPI
+  getIssuerByIdAPI,
+  getPublicIssuersAPI
 };

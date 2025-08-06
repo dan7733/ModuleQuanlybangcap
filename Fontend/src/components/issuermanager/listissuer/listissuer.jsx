@@ -191,6 +191,7 @@ const ListIssuer = () => {
         setIssuers(issuers.filter((i) => i._id !== deleteId));
         setSuccess('Xóa tổ chức thành công!');
         setShowDeleteModal(false);
+        setError('');
         if (issuers.length === 1 && currentPage > 1) {
           handlePageChange(currentPage - 1);
         }
@@ -201,6 +202,7 @@ const ListIssuer = () => {
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Phiên đăng nhập hết hạn hoặc bạn không có quyền. Vui lòng đăng nhập lại.');
         navigate('/login');
+        setShowDeleteModal(false);
       } else {
         setError(err.response?.data?.message || 'Lỗi khi xóa tổ chức.');
       }
@@ -261,8 +263,8 @@ const ListIssuer = () => {
         <div className={styles.borderBox}>
           <h4 className={styles.pageTitle}>Danh sách tổ chức</h4>
 
-          {error && <div className={styles.alertDanger}>{error}</div>}
-          {success && <div className={styles.alertSuccess}>{success}</div>}
+          {success && !showDeleteModal && <div className={styles.alertSuccess}>{success}</div>}
+          {error && !showDeleteModal && <div className={styles.alertDanger}>{error}</div>}
           {loading && (
             <div className={styles.loadingContainer}>
               <div className={styles.spinner}></div>
@@ -334,7 +336,7 @@ const ListIssuer = () => {
                       <td className={styles.actionButtons}>
                         <button
                           type="button"
-                          className={styles.btnUpdate}
+                          className={styles.btnWarning}
                           onClick={() => handleEditClick(issuer._id)}
                           disabled={loading}
                         >
@@ -419,13 +421,12 @@ const ListIssuer = () => {
                       type="button"
                       className={styles.btnClose}
                       onClick={handleCloseModal}
-                      aria-label="Close"
+                      aria-label="Đóng"
                     >
-                      &times;
+                      ×
                     </button>
                   </div>
                   <div className={styles.modalBody}>
-                    {error && <div className={styles.alertDanger}>{error}</div>}
                     <p>Bạn có chắc muốn xóa tổ chức này không?</p>
                     <p>
                       Vui lòng nhập <strong>XÁC NHẬN XÓA {deleteName}</strong> để tiếp tục:
@@ -436,8 +437,9 @@ const ListIssuer = () => {
                       value={deleteInput}
                       onChange={(e) => setDeleteInput(e.target.value)}
                       placeholder={`Nhập XÁC NHẬN XÓA ${deleteName}`}
-                      aria-label="Delete confirmation"
+                      aria-label="Xác nhận xóa"
                     />
+                    {error && <div className={styles.alertDanger}>{error}</div>}
                   </div>
                   <div className={styles.modalFooter}>
                     <button
