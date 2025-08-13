@@ -1,0 +1,258 @@
+2025-08-13 12:19:51 [INFO]: Server is running at http://localhost:3000 
+2025-08-13 12:19:51 [INFO]: Server is running on Port:3000 
+2025-08-13 12:19:51 [INFO]: Successfully connected to MongoDB 
+2025-08-13 12:20:39 [INFO]: Server is running at http://localhost:3000 
+2025-08-13 12:20:39 [INFO]: Server is running on Port:3000 
+2025-08-13 12:20:39 [INFO]: Successfully connected to MongoDB 
+2025-08-13 12:29:18 [INFO]: Fetched 6 issuers 
+2025-08-13 12:29:18 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:29:18 [INFO]: Fetched 6 issuers 
+2025-08-13 12:29:18 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:29:34 [INFO]: User logged in successfully {"email":"test@gmail.com","role":"admin"}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755667774,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Access token refreshed {"email":"test@gmail.com"}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755667774,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Access token refreshed {"email":"test@gmail.com"}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Account information retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062974}
+2025-08-13 12:29:34 [INFO]: Account information retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:34 [INFO]: Fetched 6 issuers 
+2025-08-13 12:29:34 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:29:34 [INFO]: Fetched 6 issuers 
+2025-08-13 12:29:34 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:29:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062979}
+2025-08-13 12:29:39 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:39 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062979}
+2025-08-13 12:29:39 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:39 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:40 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062980}
+2025-08-13 12:29:40 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:40 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:40 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062980}
+2025-08-13 12:29:40 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:40 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062983}
+2025-08-13 12:29:43 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:43 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:29:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755062983}
+2025-08-13 12:29:43 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:29:43 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:30:09 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063009}
+2025-08-13 12:30:09 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:09 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:30:09 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063009}
+2025-08-13 12:30:09 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:09 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:30:10 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063010}
+2025-08-13 12:30:10 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:10 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:30:10 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063010}
+2025-08-13 12:30:10 [INFO]: Fetched issuer by ID: 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:10 [INFO]: User profile retrieved {"email":"test@gmail.com"}
+2025-08-13 12:30:12 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:12 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:30:12 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:12 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:30:14 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063014}
+2025-08-13 12:30:14 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063014}
+2025-08-13 12:30:15 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 (page: 1, limit: 10, search: , level: , sort: desc) 
+2025-08-13 12:30:15 [INFO]: Fetched degree types for issuer {"issuerId":"64b7f8a2c3e5f6d234567890","user":"test@gmail.com","search":"","sort":"desc"}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 (page: 1, limit: 10, search: , level: , sort: desc) 
+2025-08-13 12:30:15 [INFO]: Fetched degree types for issuer {"issuerId":"64b7f8a2c3e5f6d234567890","user":"test@gmail.com","search":"","sort":"desc"}
+2025-08-13 12:30:15 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 (page: 1, limit: 1000, search: , level: , sort: desc) 
+2025-08-13 12:30:15 [INFO]: Fetched degree types for issuer {"issuerId":"64b7f8a2c3e5f6d234567890","user":"test@gmail.com","search":"","sort":"desc"}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063015}
+2025-08-13 12:30:15 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 (page: 1, limit: 1000, search: , level: , sort: desc) 
+2025-08-13 12:30:15 [INFO]: Fetched degree types for issuer {"issuerId":"64b7f8a2c3e5f6d234567890","user":"test@gmail.com","search":"","sort":"desc"}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:16 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:16 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 4 users (page: 1, limit: 10, search: , role: , sort: desc) 
+2025-08-13 12:30:16 [INFO]: Fetched users for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","role":"","sort":"desc"}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 4 users (page: 1, limit: 10, search: , role: , sort: desc) 
+2025-08-13 12:30:16 [INFO]: Fetched users for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","role":"","sort":"desc"}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 4 users (page: 1, limit: 1000, search: , role: , sort: desc) 
+2025-08-13 12:30:16 [INFO]: Fetched users for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","role":"","sort":"desc"}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063016}
+2025-08-13 12:30:16 [INFO]: Fetched 4 users (page: 1, limit: 1000, search: , role: , sort: desc) 
+2025-08-13 12:30:16 [INFO]: Fetched users for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","role":"","sort":"desc"}
+2025-08-13 12:30:18 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063018}
+2025-08-13 12:30:18 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063018}
+2025-08-13 12:30:18 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:18 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:18 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063018}
+2025-08-13 12:30:18 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063018}
+2025-08-13 12:30:18 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:18 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:19 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063019}
+2025-08-13 12:30:19 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063019}
+2025-08-13 12:30:19 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:19 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:19 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063019}
+2025-08-13 12:30:19 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063019}
+2025-08-13 12:30:19 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:19 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:20 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063020}
+2025-08-13 12:30:20 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063020}
+2025-08-13 12:30:20 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:20 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:20 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063020}
+2025-08-13 12:30:20 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063020}
+2025-08-13 12:30:20 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:20 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:21 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063021}
+2025-08-13 12:30:21 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063021}
+2025-08-13 12:30:21 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:21 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:21 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063021}
+2025-08-13 12:30:21 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063021}
+2025-08-13 12:30:21 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:21 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:22 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:22 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063022}
+2025-08-13 12:30:22 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:22 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:22 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:24 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:24 [INFO]: Fetched 6 issuers by user test@gmail.com 
+2025-08-13 12:30:24 [INFO]: Fetched degree with id: 688a54f44361ccadc761a224 {"degree":{"_id":"688a54f44361ccadc761a224","recipientName":"Phạm Quốc Huy","recipientDob":"2003-10-21T00:00:00.000Z","placeOfBirth":"An Giang","level":"Chứng chỉ","degreeTypeId":{"_id":"68746381d58a830913741703","title":"Chứng chỉ Tin học A","level":"Chứng chỉ","major":"Tin học cơ bản"},"issueDate":"2023-07-05T00:00:00.000Z","serialNumber":"C 00691092","registryNumber":"7955/2023","placeOfIssue":"Hậu Giang","signer":"Hà Thanh Toàn","fileAttachment":"C 00691092_20230705.jpg","cloudFile":null,"issuerId":{"_id":"64b7f8a2c3e5f6d234567890","name":"Fake Organization"},"status":"Approved","createdAt":"2025-07-30T17:23:00.801Z","updatedAt":"2025-08-07T17:31:05.059Z","degreeTypeName":"Chứng chỉ Tin học A","major":"Tin học cơ bản","issuerName":"Fake Organization"}}
+2025-08-13 12:30:24 [INFO]: Approved degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched degree with id: 688a54f44361ccadc761a224 {"degree":{"_id":"688a54f44361ccadc761a224","recipientName":"Phạm Quốc Huy","recipientDob":"2003-10-21T00:00:00.000Z","placeOfBirth":"An Giang","level":"Chứng chỉ","degreeTypeId":{"_id":"68746381d58a830913741703","title":"Chứng chỉ Tin học A","level":"Chứng chỉ","major":"Tin học cơ bản"},"issueDate":"2023-07-05T00:00:00.000Z","serialNumber":"C 00691092","registryNumber":"7955/2023","placeOfIssue":"Hậu Giang","signer":"Hà Thanh Toàn","fileAttachment":"C 00691092_20230705.jpg","cloudFile":null,"issuerId":{"_id":"64b7f8a2c3e5f6d234567890","name":"Fake Organization"},"status":"Approved","createdAt":"2025-07-30T17:23:00.801Z","updatedAt":"2025-08-07T17:31:05.059Z","degreeTypeName":"Chứng chỉ Tin học A","major":"Tin học cơ bản","issuerName":"Fake Organization"}}
+2025-08-13 12:30:24 [INFO]: Approved degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:24 [INFO]: Fetched 8 degree types for issuer 64b7f8a2c3e5f6d234567890 
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched log files successfully {"count":6}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063024}
+2025-08-13 12:30:24 [INFO]: Fetched log files successfully {"count":6}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:29 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:29 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:29 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:29 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:29 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063029}
+2025-08-13 12:30:29 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:30 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063030}
+2025-08-13 12:30:30 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063030}
+2025-08-13 12:30:30 [INFO]: Degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:30 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063030}
+2025-08-13 12:30:30 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063030}
+2025-08-13 12:30:30 [INFO]: Degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:36 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:36 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:30:36 [INFO]: Fetched 6 issuers 
+2025-08-13 12:30:36 [INFO]: Fetched 6 issuers by anonymous user 
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:39 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:39 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:39 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:39 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:39 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063039}
+2025-08-13 12:30:39 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063043}
+2025-08-13 12:30:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063043}
+2025-08-13 12:30:43 [INFO]: Degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063043}
+2025-08-13 12:30:43 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063043}
+2025-08-13 12:30:43 [INFO]: Degree fetched successfully {"id":"688a54f44361ccadc761a224","user":"test@gmail.com"}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:48 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:48 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:48 [INFO]: Fetched 6 issuers (page: 1, limit: 10, search: , sort: desc) 
+2025-08-13 12:30:48 [INFO]: Fetched issuers for admin {"userId":"686c019b9ef3c3bad140eaba","user":"test@gmail.com","search":"","sort":"desc","page":1,"limit":10}
+2025-08-13 12:30:48 [INFO]: Fetched 4 distinct issue years {"user":"test@gmail.com","issuerId":""}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063048}
+2025-08-13 12:30:48 [INFO]: Fetched 8 degrees {"query":{"search":"","status":"","effectiveIssuerId":"","degreeTypeId":"","issueYear":"","sort":"desc"},"user":"test@gmail.com","total":8,"totalPages":1,"currentPage":1}
+2025-08-13 12:30:49 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063049}
+2025-08-13 12:30:49 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063049}
+2025-08-13 12:30:49 [INFO]: Degree fetched successfully {"id":"688e2cba813c0aa9e10a4b1a","user":"test@gmail.com"}
+2025-08-13 12:30:49 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063049}
+2025-08-13 12:30:49 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063049}
+2025-08-13 12:30:49 [INFO]: Degree fetched successfully {"id":"688e2cba813c0aa9e10a4b1a","user":"test@gmail.com"}
+2025-08-13 12:30:50 [INFO]: Token verified successfully {"exp":1755063874,"currentTime":1755063050}
+2025-08-13 12:30:50 [INFO]: Digital signature verification result for degree 688e2cba813c0aa9e10a4b1a: false 

@@ -197,7 +197,7 @@ const refreshTokenAPI = (req, res) => {
 };
 
 // Lấy thông tin người dùng
-const getAccountAPI = (req, res) => {
+const getAccountAPI = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     logger.warn('Access token missing or malformed');
@@ -218,15 +218,25 @@ const getAccountAPI = (req, res) => {
   }
 
   try {
+    // Lấy thông tin người dùng từ cơ sở dữ liệu
+    const user = await userModel.getUserByEmailAPI(decoded.email);
+    if (!user) {
+      logger.warn('User not found in database', { email: decoded.email });
+      return res.status(404).json({
+        errCode: 1,
+        message: 'User not found',
+      });
+    }
+
     logger.info('Account information retrieved', { email: decoded.email });
     return res.status(200).json({
       errCode: 0,
       message: 'Success',
       data: {
         user: decoded.email,
-        fullname: decoded.fullname,
+        fullname: user.fullname, // Lấy từ DB
         role: decoded.role,
-        avatar: null, // Thêm avatar để khớp với frontend
+        avatar: user.avatar || null, // Lấy avatar từ DB
       },
     });
   } catch (error) {

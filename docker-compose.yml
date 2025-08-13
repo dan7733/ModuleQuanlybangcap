@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27018:27017"    # map host 27018 sang container 27017
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mynetwork
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./Backend/.env
+    depends_on:
+      - mongo
+    networks:
+      - mynetwork
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3001:80"   # host 3001 map vào nginx 80 trong container
+    depends_on:
+      - backend
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  mongo_data:

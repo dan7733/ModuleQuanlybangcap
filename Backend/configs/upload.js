@@ -11,9 +11,9 @@ const storage = (folder) => multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${uuidv4()}-${Date.now()}${ext}`;
+    const uniqueName = `${uuidv4()}-${Date.now()}${ext}`; // Unique filename
     logger.info(`Generated temporary filename: ${uniqueName}`);
-    cb(null, uniqueName);
+    cb(null, uniqueName); // Only the filename is passed to multer
   },
 });
 
@@ -27,16 +27,17 @@ const fileFilter = (req, file, cb) => {
 
   const isExcelRoute = req.path.includes('/degree/import-excel');
   const isImageRoute = req.path.includes('/degree/extract') || req.path.match(/\/degree\/[0-9a-fA-F]{24}$/);
+  const isProfileRoute = req.path.includes('/users/update-profile'); // Add profile route check
 
   logger.info(`Processing file upload: MIME type=${file.mimetype}, Route=${req.path}`);
 
   if (isExcelRoute && (allowedExcelTypes.includes(file.mimetype) || allowedImageTypes.includes(file.mimetype))) {
-    cb(null, true); // Chấp nhận file Excel hoặc ảnh cho import-excel
-  } else if (isImageRoute && allowedImageTypes.includes(file.mimetype)) {
-    cb(null, true); // Chấp nhận file ảnh cho extract và update degree
+    cb(null, true); // Accept Excel or image files for import-excel
+  } else if ((isImageRoute || isProfileRoute) && allowedImageTypes.includes(file.mimetype)) {
+    cb(null, true); // Accept image files for extract, update degree, and update profile
   } else {
     logger.warn(`Invalid file type: ${file.mimetype} for route ${req.path}`);
-    cb(new Error(`Chỉ cho phép ${isExcelRoute ? 'file Excel (.xlsx, .xls) hoặc ảnh' : 'file ảnh (JPEG, PNG, GIF, WebP, BMP)'}.`), false);
+    cb(new Error(`Only ${isExcelRoute ? 'Excel (.xlsx, .xls) or image files' : 'image files (JPEG, PNG, GIF, WebP, BMP)'} are allowed.`), false);
   }
 };
 

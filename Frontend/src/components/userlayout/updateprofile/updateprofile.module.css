@@ -1,0 +1,112 @@
+/* Form Box */
+.formBox {
+  max-width: 600px;
+  margin: 2rem auto;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.formBox h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #003087;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* User Info */
+.userInfo {
+  display: grid;
+  gap: 1rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+.infoLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.infoLabel i {
+  margin-right: 0.5rem;
+  color: #005580;
+}
+
+/* Success Message */
+.successMessage {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #155724;
+  background-color: #d4edda;
+  padding: 0.75rem;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+/* Error State */
+.error {
+  text-align: center;
+  font-size: 1rem;
+  color: #721c24;
+  padding: 0.75rem;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  font-size: 1rem;
+  color: #003087;
+  padding: 1.5rem;
+}
+
+/* Avatar Preview */
+.avatarPreview {
+  margin-top: 0.5rem;
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Responsive Styles */
+@media (max-width: 576px) {
+  .formBox {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  .infoItem {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem;
+  }
+
+  .infoLabel {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .col-sm-8 {
+    width: 100%;
+  }
+}

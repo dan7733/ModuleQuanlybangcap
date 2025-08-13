@@ -1,0 +1,24 @@
+docker cp DB/modulequanlybangcap.users.json mongo:/users.json
+docker cp DB/modulequanlybangcap.degreetypes.json mongo:/degreetypes.json
+docker cp DB/modulequanlybangcap.degrees.json mongo:/degrees.json
+docker cp DB/modulequanlybangcap.issuers.json mongo:/issuers.json
+
+docker exec -i mongo mongoimport --db modulequanlybangcap --collection users --file /users.json --jsonArray
+
+docker exec -i mongo mongoimport --db modulequanlybangcap --collection degreetypes --file /degreetypes.json --jsonArray
+
+docker exec -i mongo mongoimport --db modulequanlybangcap --collection degrees --file /degrees.json --jsonArray
+
+docker exec -i mongo mongoimport --db modulequanlybangcap --collection issuers --file /issuers.json --jsonArray
+
+kiểm tra
+docker exec -it mongo mongosh mongodb://localhost:27017/modulequanlybangcap
+
+use modulequanlybangcap
+db.users.find().pretty()
+db.degreetypes.find().pretty()
+db.degrees.find().pretty()
+db.issuers.find().pretty()
+
+thoát 
+exit

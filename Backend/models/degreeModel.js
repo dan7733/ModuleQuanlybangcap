@@ -1,79 +1,95 @@
 import mongoose from 'mongoose';
 import logger from '../configs/logger.js';
 import { getDegreeTypeById } from './degreetypeModel.js';
+import NodeRSA from 'node-rsa';
+
+// Tạo cặp khóa RSA cho hệ thống (có thể lưu vào file hoặc DB trong thực tế)
+const key = new NodeRSA({ b: 2048 }); // 2048-bit RSA key
+const publicKey = key.exportKey('public');
+const privateKey = key.exportKey('private');
 
 const degreeSchema = new mongoose.Schema(
   {
-    recipientName: { // tên người nhận
+    recipientName: {
       type: String,
       required: [true, 'Recipient name is required'],
       trim: true,
     },
-    recipientDob: { // ngày sinh
+    recipientDob: {
       type: Date,
       required: [true, 'Recipient date of birth is required'],
     },
-    placeOfBirth: { // nơi sinh
+    placeOfBirth: {
       type: String,
       required: false,
       trim: true,
     },
-    level: { // xếp loại: giỏi, khá...
+    level: {
       type: String,
       required: false,
       trim: true,
     },
-    degreeTypeId: { // loại văn bằng
+    degreeTypeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'DegreeType',
       required: [true, 'Degree type ID is required'],
     },
-    issueDate: { // ngày cấp
+    issueDate: {
       type: Date,
       required: [true, 'Issue date is required'],
     },
-    serialNumber: { // số hiệu văn bằng
+    serialNumber: {
       type: String,
       required: [true, 'Serial number is required'],
       unique: true,
       trim: true,
     },
-    registryNumber: { // số vào sổ cấp chứng chỉ
+    registryNumber: {
       type: String,
       required: [true, 'Registry number is required'],
       unique: true,
       trim: true,
     },
-    placeOfIssue: { // nơi cấp văn bằng
+    placeOfIssue: {
       type: String,
       required: false,
       trim: true,
     },
-    signer: { // người ký văn bằng
+    signer: {
       type: String,
       required: false,
       trim: true,
     },
-    fileAttachment: { // tên file upload lên hệ thống
+    fileAttachment: {
       type: String,
       default: null,
       trim: true,
     },
-    cloudFile: { // link lưu trữ trên cloud nếu có
+    cloudFile: {
       type: String,
       default: null,
       trim: true,
     },
-    issuerId: { // người cấp (liên kết với bảng User)
+    issuerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Issuer',
       required: [true, 'Issuer ID is required'],
     },
-    status: { // trạng thái duyệt
+    status: {
       type: String,
       required: [true, 'Status is required'],
       enum: ['Pending', 'Rejected', 'Approved'],
       default: 'Pending',
+      trim: true,
+    },
+    digitalSignature: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    signerEmail: {
+      type: String,
+      default: null,
       trim: true,
     },
   },
@@ -270,7 +286,7 @@ const createDegree = async (degreeData, userId, selectedIssuerId) => {
   }
 };
 
-const getListDegrees = async (userId, page = 1, limit = 10, search = '', status = '', issuerId = '', sort = 'desc') => {
+const getListDegrees = async (userId, page = 1, limit = 10, search = '', status = '', issuerId = '', degreeTypeId = '', issueYear = '', sort = 'desc') => {
   try {
     const user = await mongoose.model('User').findById(userId).lean();
     if (!user) {
@@ -287,23 +303,20 @@ const getListDegrees = async (userId, page = 1, limit = 10, search = '', status 
       ];
     }
     if (status) query.status = status;
-
-    // Role-based filtering
-    if (user.roleid === 3) { // Admin (roleid 3)
-      if (issuerId && mongoose.isValidObjectId(issuerId)) query.issuerId = issuerId;
-    } else if (user.roleid === 2) { // Manager (roleid 2, assuming manager role)
-      if (!user.issuerId) {
-        logger.error(`Manager ${userId} has no associated issuerId`);
-        throw new Error('Manager has no associated issuerId');
+    if (degreeTypeId && mongoose.isValidObjectId(degreeTypeId)) query.degreeTypeId = degreeTypeId;
+    if (issueYear) {
+      const year = parseInt(issueYear);
+      if (!isNaN(year)) {
+        query.issueDate = {
+          $gte: new Date(year, 0, 1),
+          $lte: new Date(year, 11, 31, 23, 59, 59, 999),
+        };
       }
-      query.issuerId = user.issuerId; // Filter by manager's issuerId
-    } else {
-      logger.error(`User ${userId} does not have permission to view degrees`);
-      throw new Error('Permission denied');
     }
+    if (issuerId && mongoose.isValidObjectId(issuerId)) query.issuerId = issuerId;
 
     const sortOption = sort === 'asc' ? { issueDate: 1 } : { issueDate: -1 };
-    const skip = (page - 1) * limit;
+    const skip = limit > 0 ? (page - 1) * limit : 0;
 
     const [degrees, total] = await Promise.all([
       Degree.find(query)
@@ -311,7 +324,7 @@ const getListDegrees = async (userId, page = 1, limit = 10, search = '', status 
         .populate('issuerId', 'name')
         .sort(sortOption)
         .skip(skip)
-        .limit(limit)
+        .limit(limit > 0 ? limit : undefined)
         .lean(),
       Degree.countDocuments(query),
     ]);
@@ -326,7 +339,7 @@ const getListDegrees = async (userId, page = 1, limit = 10, search = '', status 
     return {
       degrees: enrichedDegrees,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: limit > 0 ? Math.ceil(total / limit) : 1,
       currentPage: page,
     };
   } catch (error) {
@@ -485,6 +498,8 @@ const updateDegree = async (degreeId, degreeData, userId, selectedIssuerId) => {
     degree.fileAttachment = fileAttachment || degree.fileAttachment;
     degree.issuerId = issuerId;
     degree.status = 'Pending'; // Set status to Pending for re-approval
+    degree.digitalSignature = null; // Set digitalSignature to null
+    degree.signerEmail = null; // Set signerEmail to null
 
     await degree.save();
     logger.info(`Degree updated successfully: ${degreeId}`, { updatedFields: degreeData });
@@ -616,6 +631,176 @@ const updateDegreeFileAttachment = async (degreeId, fileAttachment) => {
   }
 };
 
+const createDigitalSignature = (data) => {
+  try {
+    if (!privateKey.includes('PRIVATE KEY')) {
+      logger.error('Invalid RSA private key');
+      throw new Error('Invalid RSA private key');
+    }
+    const key = new NodeRSA();
+    key.importKey(privateKey, 'private');
+    const signature = key.sign(data, 'hex');
+    return signature;
+  } catch (error) {
+    logger.error('Error creating digital signature', { error: error.message });
+    throw error;
+  }
+};
+
+const verifyDigitalSignature = (data, signature) => {
+  try {
+    if (!publicKey.includes('PUBLIC KEY')) {
+      logger.error('Invalid RSA public key');
+      throw new Error('Invalid RSA public key');
+    }
+    const key = new NodeRSA();
+    key.importKey(publicKey, 'public');
+    return key.verify(data, signature, 'utf8', 'hex');
+  } catch (error) {
+    logger.error('Error verifying digital signature', { error: error.message });
+    throw error;
+  }
+};
+
+const updateDegreeStatus = async (degreeId, status, userId, cloudFile) => {
+  try {
+    if (!mongoose.isValidObjectId(degreeId)) {
+      logger.error(`Invalid degree ID: ${degreeId}`);
+      throw new Error('Invalid degree ID');
+    }
+
+    if (!mongoose.isValidObjectId(userId)) {
+      logger.error(`Invalid user ID: ${userId}`);
+      throw new Error('Invalid user ID');
+    }
+
+    if (!['Pending', 'Rejected', 'Approved'].includes(status)) {
+      logger.error(`Invalid status: ${status}`);
+      throw new Error('Invalid status value');
+    }
+
+    const degree = await Degree.findById(degreeId);
+    if (!degree) {
+      logger.error(`Degree not found with ID: ${degreeId}`);
+      throw new Error('Degree not found');
+    }
+
+    const user = await mongoose.model('User').findById(userId).lean();
+    if (!user) {
+      logger.error(`User not found with ID: ${userId}`);
+      throw new Error('User not found');
+    }
+
+    if (user.roleid !== 3 && (user.roleid !== 1 || degree.issuerId.toString() !== user.issuerId.toString())) {
+      logger.error(`User ${userId} does not have permission to update degree status ${degreeId}`);
+      throw new Error('Permission denied');
+    }
+
+    // Tạo object dữ liệu
+    const dataObj = {
+      recipientName: degree.recipientName,
+      recipientDob: degree.recipientDob ? degree.recipientDob.toISOString() : null,
+      placeOfBirth: degree.placeOfBirth,
+      level: degree.level,
+      degreeTypeId: degree.degreeTypeId.toString(),
+      issueDate: degree.issueDate ? degree.issueDate.toISOString() : null,
+      serialNumber: degree.serialNumber,
+      registryNumber: degree.registryNumber,
+      placeOfIssue: degree.placeOfIssue,
+      signer: degree.signer,
+      fileAttachment: degree.fileAttachment,
+      cloudFile: cloudFile || degree.cloudFile,
+      issuerId: degree.issuerId.toString(),
+      status: status,
+      createdAt: degree.createdAt ? degree.createdAt.toISOString() : null,
+      // Không có updatedAt nữa
+      signerEmail: user.email,
+    };
+
+    // Sort key để đảm bảo thứ tự nhất quán
+    const sortedData = Object.keys(dataObj).sort().reduce((acc, key) => { acc[key] = dataObj[key]; return acc; }, {});
+
+    const dataToSign = JSON.stringify(sortedData);
+
+    degree.status = status;
+    degree.cloudFile = cloudFile;
+
+    if (status === 'Approved') {
+      degree.digitalSignature = createDigitalSignature(dataToSign);
+      degree.signerEmail = user.email;
+      logger.info(`Created digital signature for degree ${degreeId}`);
+    } else {
+      degree.digitalSignature = null;
+      degree.signerEmail = null;
+      logger.info(`Removed digital signature and signer email for degree ${degreeId}`);
+    }
+
+    await degree.save();
+    logger.info(`Degree status updated successfully: ${degreeId}`, { status, userId });
+    return degree;
+  } catch (error) {
+    logger.error(`Error updating degree status with ID: ${degreeId}`, {
+      error: error.message,
+      stack: error.stack,
+      status,
+      userId,
+    });
+    throw error;
+  }
+};
+
+const verifyDegreeSignature = async (degreeId) => {
+  try {
+    if (!mongoose.isValidObjectId(degreeId)) {
+      logger.error(`Invalid degree ID: ${degreeId}`);
+      throw new Error('Invalid degree ID');
+    }
+
+    const degree = await Degree.findById(degreeId).lean();
+    if (!degree) {
+      logger.error(`Degree not found with ID: ${degreeId}`);
+      throw new Error('Degree not found');
+    }
+
+    if (!degree.digitalSignature) {
+      logger.warn(`No digital signature found for degree ${degreeId}`);
+      return { isValid: false, message: 'No digital signature found' };
+    }
+
+    // Tạo object dữ liệu
+    const dataObj = {
+      recipientName: degree.recipientName,
+      recipientDob: degree.recipientDob ? new Date(degree.recipientDob).toISOString() : null,
+      placeOfBirth: degree.placeOfBirth,
+      level: degree.level,
+      degreeTypeId: degree.degreeTypeId.toString(),
+      issueDate: degree.issueDate ? new Date(degree.issueDate).toISOString() : null,
+      serialNumber: degree.serialNumber,
+      registryNumber: degree.registryNumber,
+      placeOfIssue: degree.placeOfIssue,
+      signer: degree.signer,
+      fileAttachment: degree.fileAttachment,
+      cloudFile: degree.cloudFile,
+      issuerId: degree.issuerId.toString(),
+      status: degree.status,
+      createdAt: degree.createdAt ? new Date(degree.createdAt).toISOString() : null,
+      // Không có updatedAt nữa
+      signerEmail: degree.signerEmail || null,
+    };
+
+    // Sort key để đảm bảo thứ tự nhất quán
+    const sortedData = Object.keys(dataObj).sort().reduce((acc, key) => { acc[key] = dataObj[key]; return acc; }, {});
+
+    const dataToVerify = JSON.stringify(sortedData);
+
+    const isValid = verifyDigitalSignature(dataToVerify, degree.digitalSignature);
+    logger.info(`Digital signature verification result for degree ${degreeId}: ${isValid}`);
+    return { isValid, message: isValid ? 'Digital signature is valid' : 'Digital signature is invalid' };
+  } catch (error) {
+    logger.error(`Error verifying digital signature for degree ${degreeId}`, { error: error.message });
+    throw error;
+  }
+};
 
 export { 
   getApprovedDegreeById, 
@@ -629,6 +814,8 @@ export {
   getDegreeById,
   getDegreeByIdForSync,
   updateDegreeCloudFile,
-  updateDegreeFileAttachment
- };
+  updateDegreeFileAttachment,
+  updateDegreeStatus,
+  verifyDegreeSignature
+};
 export default Degree;

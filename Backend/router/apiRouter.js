@@ -9,10 +9,33 @@ import degreetypeController from '../controllers/degreetypeController';
 import issuerController from '../controllers/issuerController';
 import logController from '../controllers/logController';
 import cloudController from '../controllers/cloundController';
+import verificationController from '../controllers/verificationController';
 const router = express.Router();
 
 const initAPIRoute = (app) => {
-  
+
+
+
+  // Verification routes
+  router.get('/verification/by-issuer', authMiddleware.certifierMiddlewareAPI, verificationController.getDegreeTypesByIssuerAPI);
+  router.get('/verification/export-excel', 
+    authMiddleware.certifierMiddlewareAPI,
+    verificationController.exportDegreesToExcel
+  );
+  router.get('/verification/list', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, verificationController.getListDegreesAPI);
+  router.get('/verification/degrees/years', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, verificationController.getDistinctIssueYears);
+  router.get('/verification/degree/:id', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, verificationController.getDegreeByIdAPI);
+  router.put(
+    '/verification/degree/:id',
+    authMiddleware.userMiddlewareAPI,
+    authMiddleware.certifierMiddlewareAPI,
+    verificationController.updateDegreeAPI
+  );
+    router.get('/verification/degree/:id/verify-signature', 
+    authMiddleware.userMiddlewareAPI, 
+    verificationController.verifyDegreeSignatureAPI
+  );
+
   // Login and logout
   router.post('/login', loginController.userLoginAPI);
   router.get('/logout', authMiddleware.userMiddlewareAPI, loginController.userLogoutAPI);
@@ -47,6 +70,14 @@ const initAPIRoute = (app) => {
   degreeController.updateDegreeAPI
   );
 
+  router.get('/degrees/export-excel', 
+    authMiddleware.managerMiddlewareAPI,
+    degreeController.exportDegreesToExcel
+  );
+
+  router.get('/degrees/years', authMiddleware.managerMiddlewareAPI, degreeController.getDistinctIssueYears);
+ 
+
   router.get('/public/degree-types/by-issuer', degreeController.getDegreeTypesByIssuerAPI); // API public lấy danh sách loại văn bằng theo issuerId
   router.get('/public/issuers', issuerController.getPublicIssuersAPI); // API public lấy danh sách đơn vị cấp
 
@@ -78,7 +109,14 @@ const initAPIRoute = (app) => {
   // Đổi mật khẩu
   router.post('/users/change-password', authMiddleware.userMiddlewareAPI, userController.changePassword);
 
-
+  // Cập nhật thông tin người dùng
+  router.put(
+    '/users/update-profile',
+    authMiddleware.userMiddlewareAPI,
+    upload('avatars').single('avatar'),
+    userController.updateUserProfileAPI
+  );
+  
   //
   router.post('/degree-type', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.createDegreeTypeAPI);
   router.put('/degree-type/:id', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.updateDegreeTypeAPI);

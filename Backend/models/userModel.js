@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
+      required: false,
     },
     email: {
       type: String,
@@ -26,7 +27,7 @@ const userSchema = new mongoose.Schema(
     issuerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Issuer',
-      required: [true, 'Issuer ID is required'], // Linked to Issuer collection
+      required: [true, 'Issuer ID is required'],
     },
     password: {
       type: String,
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema(
     roleid: {
       type: Number,
       required: true,
-      enum: [0, 1, 2, 3], // 3 admin, 2 manager, 1 certifier, 0 user
+      enum: [0, 1, 2, 3],
     },
     googleid: {
       type: String,
@@ -53,6 +54,10 @@ const userSchema = new mongoose.Schema(
     resetPasswordTokenExpiresAt: {
       type: Date,
       required: false,
+    },
+    avatar: {
+      type: String,
+      required: false, // URL hoặc đường dẫn đến ảnh avatar
     },
   },
   {
@@ -198,7 +203,7 @@ const changePassword = async (email, currentPassword, newPassword, confirmPasswo
   }
 };
 
-// tạo người dùng
+// Tạo người dùng
 const createUser = async (userId, userData) => {
   try {
     logger.debug('Starting user creation', { userData });
@@ -209,8 +214,8 @@ const createUser = async (userId, userData) => {
       throw new Error('Database not connected');
     }
 
-    // Validate input data
-    const { fullname, email, password, roleid, issuerId, creatorEmail } = userData;
+    // Validate input data (loại bỏ phonenumber khỏi danh sách bắt buộc)
+    const { fullname, email, password, roleid, issuerId, creatorEmail, phonenumber, dob, status } = userData;
     if (!fullname || !email || !password || roleid === undefined || !issuerId || !creatorEmail) {
       logger.error('Missing required user fields', { userData });
       throw new Error('Missing required user fields');
@@ -221,6 +226,15 @@ const createUser = async (userId, userData) => {
     if (existingUser) {
       logger.error(`Email already exists: ${email}`);
       throw new Error('Email already exists');
+    }
+
+    // Check if phonenumber already exists if provided
+    if (phonenumber) {
+      const existingPhone = await User.findOne({ phonenumber }).lean();
+      if (existingPhone) {
+        logger.error(`Phone number already exists: ${phonenumber}`);
+        throw new Error('Phone number already exists');
+      }
     }
 
     // Validate issuerId
@@ -241,6 +255,12 @@ const createUser = async (userId, userData) => {
       throw new Error('Password must be a string');
     }
 
+    // Validate status if provided
+    if (status && !['active', 'inactive'].includes(status)) {
+      logger.error(`Invalid status: ${status}`);
+      throw new Error('Invalid status');
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -252,6 +272,9 @@ const createUser = async (userId, userData) => {
       password: hashedPassword,
       roleid: Number(roleid),
       issuerId,
+      phonenumber: phonenumber || undefined,
+      dob: dob || undefined,
+      status: status || undefined,
     });
 
     await newUser.save();
@@ -337,6 +360,12 @@ const deleteUser = async (userId, targetUserId) => {
       throw new Error('User not found');
     }
 
+    // Delete avatar if exists
+    if (targetUser.avatar) {
+      deleteImage(path.basename(targetUser.avatar));
+    }
+
+    // Delete user from database
     await User.deleteOne({ _id: targetUserId });
     logger.info(`User deleted successfully by user ${userId}: ${targetUserId}`);
     return { success: true, message: 'User deleted successfully' };
@@ -351,7 +380,6 @@ const deleteUser = async (userId, targetUserId) => {
     throw error;
   }
 };
-
 
 // Get user by ID
 const getUserById = async (id) => {
@@ -382,7 +410,6 @@ const getUserById = async (id) => {
 };
 
 // Update user
-// Update user
 const updateUser = async (adminId, targetUserId, userData) => {
   try {
     // Validate admin
@@ -409,7 +436,7 @@ const updateUser = async (adminId, targetUserId, userData) => {
       throw new Error('User not found');
     }
 
-    // Validate input data
+    // Validate input data (loại bỏ phonenumber khỏi danh sách bắt buộc)
     const { fullname, dob, phonenumber, email, roleid, status, issuerId } = userData;
     if (!fullname || !email) {
       logger.error(`Missing required user fields: ${JSON.stringify(userData)}`);
@@ -453,7 +480,7 @@ const updateUser = async (adminId, targetUserId, userData) => {
     targetUser.roleid = roleid !== undefined ? parseInt(roleid) : targetUser.roleid;
     targetUser.status = status || targetUser.status;
     if (issuerId) {
-      targetUser.issuerId = issuerId; // Update issuerId if provided
+      targetUser.issuerId = issuerId;
     }
 
     await targetUser.save();
@@ -461,6 +488,44 @@ const updateUser = async (adminId, targetUserId, userData) => {
     return targetUser;
   } catch (error) {
     logger.error(`Error updating user by admin ${adminId}`, { error });
+    throw error;
+  }
+};
+
+const updateUserProfile = async (email, userData) => {
+  try {
+    const targetUser = await User.findOne({ email });
+    if (!targetUser) {
+      logger.error(`User not found for email: ${email}`);
+      throw new Error('User not found');
+    }
+
+    const { fullname, dob, phonenumber, avatar } = userData;
+    if (!fullname) {
+      logger.error(`Missing required field: fullname`, { email });
+      throw new Error('Fullname is required');
+    }
+
+    if (phonenumber && phonenumber !== targetUser.phonenumber) {
+      const existingPhone = await User.findOne({ phonenumber });
+      if (existingPhone) {
+        logger.error(`Phone number already exists: ${phonenumber}`, { email });
+        throw new Error('Phone number already exists');
+      }
+    }
+
+    targetUser.fullname = fullname;
+    targetUser.dob = dob || null;
+    targetUser.phonenumber = phonenumber || null;
+    if (avatar) {
+      targetUser.avatar = avatar;
+    }
+
+    await targetUser.save();
+    logger.info(`User profile updated successfully: ${email}`);
+    return targetUser;
+  } catch (error) {
+    logger.error(`Error updating user profile: ${email}`, { error });
     throw error;
   }
 };
@@ -478,5 +543,6 @@ export default {
   getUserById,
   updateUser,
   getUsers,
-  deleteUser
+  deleteUser,
+  updateUserProfile
 };

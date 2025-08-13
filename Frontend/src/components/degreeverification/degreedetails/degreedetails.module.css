@@ -1,0 +1,94 @@
+.borderBox {
+  border: 1px solid #dee2e6;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.bthThembangcap {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.bthThembangcap:hover {
+  background-color: #0056b3;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-label {
+  font-weight: bold;
+}
+
+.form-select,
+.form-control {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.form-control[readonly] {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  padding: 10px 20px;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border: none;
+  padding: 10px 20px;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}

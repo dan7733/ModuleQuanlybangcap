@@ -721,7 +721,16 @@ const renameImageFile = (oldFilename, serialNumber, issueDate) => {
 const getListDegreesAPI = async (req, res) => {
   try {
     const { email } = req.user;
-    const { page = 1, limit = 10, search = '', status = '', issuerId = '', sort = 'desc' } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      status = '',
+      issuerId = '',
+      degreeTypeId = '',
+      issueYear = '',
+      sort = 'desc',
+    } = req.query;
 
     // Log incoming request for debugging
     logger.debug(`Received request for degrees`, { email, query: req.query });
@@ -767,6 +776,8 @@ const getListDegreesAPI = async (req, res) => {
       search,
       status,
       effectiveIssuerId,
+      degreeTypeId,
+      issueYear,
       sort,
       role: user.roleid === 3 ? 'admin' : 'manager',
     });
@@ -779,12 +790,14 @@ const getListDegreesAPI = async (req, res) => {
       search,
       status,
       effectiveIssuerId,
+      degreeTypeId,
+      issueYear,
       sort
     );
 
     // Log result details
     logger.info(`Fetched ${result.degrees.length} degrees`, {
-      query: { search, status, effectiveIssuerId, sort },
+      query: { search, status, effectiveIssuerId, degreeTypeId, issueYear, sort },
       user: email,
       total: result.total,
       totalPages: result.totalPages,
@@ -794,7 +807,7 @@ const getListDegreesAPI = async (req, res) => {
     // If no degrees found, include a warning in the response
     if (result.degrees.length === 0) {
       logger.warn(`No degrees found for query`, {
-        query: { search, status, effectiveIssuerId, sort },
+        query: { search, status, effectiveIssuerId, degreeTypeId, issueYear, sort },
         user: email,
       });
       return res.status(200).json({
@@ -821,6 +834,185 @@ const getListDegreesAPI = async (req, res) => {
   } catch (error) {
     logger.error('Error fetching degrees', { error, user: req.user?.email, query: req.query });
     return res.status(500).json({ errCode: 1, message: error.message || 'Error fetching degrees' });
+  }
+};
+
+const exportDegreesToExcel = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const {
+      search = '',
+      status = '',
+      issuerId = '',
+      degreeTypeId = '',
+      issueYear = '',
+      sort = 'desc',
+    } = req.query;
+
+    // Fetch user information by email
+    const user = await userModel.getUserByEmailAPI(email);
+    if (!user) {
+      logger.error(`User not found with email: ${email}`);
+      return res.status(400).json({
+        errCode: 1,
+        message: 'User not found with provided email',
+      });
+    }
+
+    // Prepare issuerId based on role
+    let effectiveIssuerId = '';
+    if (user.roleid === 3) { // Admin
+      if (issuerId && mongoose.isValidObjectId(issuerId)) {
+        effectiveIssuerId = issuerId;
+      }
+    } else if (user.roleid === 2) { // Manager
+      if (!user.issuerId) {
+        logger.error(`Manager ${email} has no associated issuerId`);
+        return res.status(400).json({
+          errCode: 1,
+          message: 'Manager has no associated issuerId',
+        });
+      }
+      effectiveIssuerId = user.issuerId.toString();
+    } else {
+      logger.error(`User ${email} does not have permission to export degrees`, { roleid: user.roleid });
+      return res.status(403).json({
+        errCode: 1,
+        message: 'Permission denied',
+      });
+    }
+
+    // Fetch degrees without pagination for export
+    const result = await getListDegrees(
+      user._id.toString(),
+      1, // Page 1
+      0, // Limit 0 to get all records
+      search,
+      status,
+      effectiveIssuerId,
+      degreeTypeId,
+      issueYear,
+      sort
+    );
+
+    const degrees = result.degrees;
+
+    // Create Excel workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Degrees');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'Tên người nhận', key: 'recipientName', width: 30 },
+      { header: 'Số hiệu', key: 'serialNumber', width: 20 },
+      { header: 'Số vào sổ', key: 'registryNumber', width: 20 },
+      { header: 'Ngày cấp', key: 'issueDate', width: 15 },
+      { header: 'Trạng thái', key: 'status', width: 15 },
+      { header: 'Loại văn bằng', key: 'degreeType', width: 30 },
+      { header: 'Đơn vị cấp', key: 'issuer', width: 30 },
+      { header: 'Xếp loại', key: 'level', width: 15 },
+    ];
+
+    // Add data
+    degrees.forEach((degree) => {
+      worksheet.addRow({
+        recipientName: degree.recipientName,
+        serialNumber: degree.serialNumber,
+        registryNumber: degree.registryNumber,
+        issueDate: new Date(degree.issueDate).toLocaleDateString('vi-VN'),
+        status: degree.status === 'Pending' ? 'Chờ duyệt' : degree.status === 'Approved' ? 'Đã duyệt' : 'Đã từ chối',
+        degreeType: degree.degreeType?.title || 'N/A',
+        issuer: degree.issuer?.name || 'N/A',
+        level: degree.level || 'N/A',
+      });
+    });
+
+    // Style the header
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B619D' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Auto-size columns
+    worksheet.columns.forEach((column) => {
+      column.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+    });
+
+    // Write to buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=degrees_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    // Send the buffer
+    res.send(buffer);
+
+  } catch (error) {
+    logger.error('Error exporting degrees to Excel', { error, user: req.user?.email, query: req.query });
+    return res.status(500).json({ errCode: 1, message: error.message || 'Error exporting degrees to Excel' });
+  }
+};
+
+const getDistinctIssueYears = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const { issuerId = '' } = req.query;
+
+    // Fetch user information by email
+    const user = await userModel.getUserByEmailAPI(email);
+    if (!user) {
+      logger.error(`User not found with email: ${email}`);
+      return res.status(400).json({
+        errCode: 1,
+        message: 'User not found with provided email',
+      });
+    }
+
+    // Prepare issuerId based on role
+    let effectiveIssuerId = '';
+    if (user.roleid === 3) { // Admin
+      if (issuerId && mongoose.isValidObjectId(issuerId)) {
+        effectiveIssuerId = issuerId;
+      }
+    } else if (user.roleid === 2) { // Manager
+      if (!user.issuerId) {
+        logger.error(`Manager ${email} has no associated issuerId`);
+        return res.status(400).json({
+          errCode: 1,
+          message: 'Manager has no associated issuerId',
+        });
+      }
+      effectiveIssuerId = user.issuerId.toString();
+    } else {
+      logger.error(`User ${email} does not have permission to fetch issue years`, { roleid: user.roleid });
+      return res.status(403).json({
+        errCode: 1,
+        message: 'Permission denied',
+      });
+    }
+
+    // Build query for distinct years
+    const query = {};
+    if (effectiveIssuerId) {
+      query.issuerId = effectiveIssuerId;
+    }
+
+    // Fetch distinct years from issueDate
+    const years = await Degree.distinct('issueDate', query)
+      .then(dates => dates.map(date => new Date(date).getFullYear()))
+      .then(years => [...new Set(years)].sort((a, b) => b - a)); // Sort descending
+
+    logger.info(`Fetched ${years.length} distinct issue years`, { user: email, issuerId: effectiveIssuerId });
+
+    return res.status(200).json({
+      errCode: 0,
+      data: { years },
+    });
+  } catch (error) {
+    logger.error('Error fetching distinct issue years', { error, user: req.user?.email, query: req.query });
+    return res.status(500).json({ errCode: 1, message: error.message || 'Error fetching issue years' });
   }
 };
 
@@ -922,7 +1114,7 @@ const updateDegreeAPI = async (req, res) => {
       });
     }
 
-    // Check if degree exists and get old fileAttachment for cleanup
+    // Check if degree exists and get old cloudFile for cleanup
     const existingDegree = await Degree.findById(id);
     if (!existingDegree) {
       if (req.file) deleteImage(req.file.filename);
@@ -984,6 +1176,23 @@ const updateDegreeAPI = async (req, res) => {
 
     // Update degree
     const updatedDegree = await updateDegree(id, degreeData, userId, issuerId);
+    
+    // If update is successful and status is set to Pending, delete cloud file and set cloudFile to null
+    if (updatedDegree && updatedDegree.cloudFile) {
+      try {
+        await deleteFromMega(updatedDegree.cloudFile);
+        logger.info(`Deleted cloud file from Mega.nz for degree ${id}`, { cloudFile: updatedDegree.cloudFile });
+        updatedDegree.cloudFile = null;
+        await updatedDegree.save(); // Save the updated degree with cloudFile set to null
+      } catch (error) {
+        logger.warn(`Failed to delete cloud file for degree ${id}: ${error.message}`, {
+          cloudFile: updatedDegree.cloudFile,
+          stack: error.stack,
+        });
+        // Continue even if file deletion fails
+      }
+    }
+
     logger.info(`Degree updated successfully`, { degreeId: id, user: req.user.email, updatedFields: degreeData });
     return res.status(200).json({
       errCode: 0,
@@ -1034,5 +1243,7 @@ export default {
   getListDegreesAPI,
   deleteDegreeAPI,
   updateDegreeAPI,
-  getDegreeByIdAPI
+  getDegreeByIdAPI,
+  exportDegreesToExcel,
+  getDistinctIssueYears
 };
