@@ -123,6 +123,7 @@ const DegreeVerificationDetails = () => {
       'Signature is valid': 'Chữ ký số hợp lệ.',
       'Digital signature is valid': 'Chữ ký số hợp lệ.',
       'Degree status updated successfully': 'Cập nhật trạng thái văn bằng thành công!',
+      'Digital signature is invalid': 'Chữ ký số không hợp lệ! đã bị thay đổi hoặc không hợp lệ.',
     };
     return successMap[serverMessage] || serverMessage;
   };

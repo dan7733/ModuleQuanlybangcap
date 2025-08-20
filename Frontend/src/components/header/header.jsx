@@ -88,12 +88,6 @@ const Header = () => {
               >
                 TRA CỨU
               </Link>
-              <Link
-                className={`${styles.navLink} btn btn-link`}
-                to="/reset-password"
-              >
-                HƯỚNG DẪN SỬ DỤNG
-              </Link>
               {/* Hiển thị menu Quản lý loại bằng nếu có quyền admin hoặc certifier */}
               {isAuthorizedForDiploma && (
                 <button

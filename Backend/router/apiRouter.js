@@ -96,10 +96,11 @@ const initAPIRoute = (app) => {
 
   // Degree management
   // Lấy thông tin văn bằng theo ID
+  router.get('/public/degree/:id', degreeController.getDegreeByIdAPI);
   router.get('/degree/:id', authMiddleware.userMiddlewareAPI, authMiddleware.managerMiddlewareAPI, degreeController.getDegreeByIdAPI);
-  router.get('/approveddegree/:id', degreeController.getApprovedDegreeByIdAPI);
+  router.get('/public/approveddegree/:id', degreeController.getApprovedDegreeByIdAPI);
   // Lấy danh sách văn bằng theo bộ lọc
-  router.get('/degrees', degreeController.getDegreesByFilterAPI);
+  router.get('/public/degrees', degreeController.getDegreesByFilterAPI);
 
 
   // lấy thông tin người dùng
@@ -125,8 +126,8 @@ const initAPIRoute = (app) => {
   router.get('/degree-types/issuer', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, degreetypeController.getDegreeTypesByIssuerAPI);
 
   // Issuer management
-  router.get('/issuers', authMiddleware.userMiddlewareAPI, authMiddleware.certifierMiddlewareAPI, issuerController.getIssuersAPI);
-  router.get('/issuers/list', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, issuerController.getListIssuerAPI);
+  router.get('/issuers', authMiddleware.userMiddlewareAPI, authMiddleware.managerMiddlewareAPI, issuerController.getIssuersAPI);
+  router.get('/issuers/list', authMiddleware.userMiddlewareAPI, authMiddleware.managerMiddlewareAPI, issuerController.getListIssuerAPI);
   router.post('/issuer', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, issuerController.createIssuerAPI);
   router.delete('/issuer/:id', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, issuerController.deleteIssuerAPI);
   router.put('/issuer/:id', authMiddleware.userMiddlewareAPI, authMiddleware.adminMiddlewareAPI, issuerController.updateIssuerAPI);

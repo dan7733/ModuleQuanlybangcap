@@ -12,6 +12,10 @@ const getAccessToken = () => {
     return null;
   }
   try {
+    if (!SECRET_KEY) {
+      console.error('SECRET_KEY is not defined', { timestamp: new Date().toISOString() });
+      return null;
+    }
     const bytes = CryptoJS.AES.decrypt(userData, SECRET_KEY);
     const user = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
     if (!user || !user.accessToken) {
@@ -88,10 +92,16 @@ const setupAxiosInterceptors = (navigate) => {
             withCredentials: true,
           });
           if (response.data.errCode !== 0 || !response.data.accessToken) {
-            throw new Error('No access token returned from refresh');
+            throw new Error(response.data.message || 'No access token returned from refresh');
           }
           const { accessToken } = response.data;
-          const userData = localStorage.getItem('user') || sessionStorage.getItem('user') || '{}';
+          const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+          if (!userData) {
+            throw new Error('No user data found in storage');
+          }
+          if (!SECRET_KEY) {
+            throw new Error('Encryption key missing');
+          }
           const bytes = CryptoJS.AES.decrypt(userData, SECRET_KEY);
           const user = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
           const updatedUser = { ...user, accessToken, auth: true };
@@ -121,6 +131,12 @@ const setupAxiosInterceptors = (navigate) => {
           isRefreshing = false;
         }
       }
+      console.error('Request failed:', {
+        url: originalRequest?.url,
+        status: error.response?.status,
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
       return Promise.reject(error);
     }
   );
@@ -136,14 +152,25 @@ const login = async (email, password) => {
 
 const logout = async () => {
   const token = getAccessToken();
-  if (!token) {
-    console.warn('No access token available for logout', { timestamp: new Date().toISOString() });
-    return { data: { errCode: 0, message: 'No token to logout' } };
+  try {
+    if (!token) {
+      console.warn('No access token available for logout', { timestamp: new Date().toISOString() });
+      return { data: { errCode: 0, message: 'No token to logout' } };
+    }
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/logout`, {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('Logout response:', response.data, { timestamp: new Date().toISOString() });
+    return response;
+  } catch (error) {
+    console.warn('Logout API failed:', {
+      message: error.message,
+      response: error.response?.data,
+      timestamp: new Date().toISOString(),
+    });
+    return { data: { errCode: 0, message: 'Local logout succeeded' } };
   }
-  return await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/logout`, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
 };
 
 const account = async () => {

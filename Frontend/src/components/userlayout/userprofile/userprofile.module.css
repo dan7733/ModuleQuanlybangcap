@@ -1,17 +1,19 @@
 /* Form Box */
 .formBox {
-  max-width: 700px; /* Tăng nhẹ để chứa bảng */
+  max-width: 600px; /* Reduced to prevent overflow */
   margin: 2rem auto;
   background-color: #ffffff;
   padding: 1.5rem;
-  border: 1px solid #e0e0e0; /* Viền nhẹ, trang trọng */
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
+  overflow-x: auto; /* Add horizontal scroll if content overflows */
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
 }
 
 .formBox h5 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #003087; /* Xanh navy đậm */
+  color: #003087;
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -33,52 +35,45 @@
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #005580; /* Viền xanh đậm */
+  border: 2px solid #005580;
 }
 
-/* User Info - Table Layout */
+/* User Info - Flexible Layout */
 .userInfo {
-  display: table;
   width: 100%;
-  border-collapse: collapse;
-  background-color: #f9f9f9; /* Nền nhạt */
+  background-color: #f9f9f9;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
 }
 
 .infoItem {
-  display: table-row;
-}
-
-.infoLabel,
-.infoValue {
-  display: table-cell;
+  display: flex;
+  flex-wrap: wrap;
   padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  color: #333333; /* Xám đậm */
   border-bottom: 1px solid #e0e0e0;
 }
 
 .infoLabel {
+  flex: 0 0 30%; /* Fixed width for label */
   font-weight: 500;
-  width: 30%; /* Nhãn chiếm 30% chiều rộng */
-  background-color: #f1f3f5; /* Nền nhạt hơn cho nhãn */
-  vertical-align: middle;
+  color: #333333;
+  padding-right: 1rem;
 }
 
 .infoLabel i {
   margin-right: 0.5rem;
-  color: #005580; /* Xanh đậm */
+  color: #005580;
 }
 
 .infoValue {
+  flex: 1;
   font-weight: 400;
-  vertical-align: middle;
+  color: #333333;
+  word-wrap: break-word; /* Prevent text overflow */
 }
 
 /* Last row without border */
-.infoItem:last-child .infoLabel,
-.infoItem:last-child .infoValue {
+.infoItem:last-child {
   border-bottom: none;
 }
 
@@ -86,7 +81,7 @@
 .loading {
   text-align: center;
   font-size: 1rem;
-  color: #003087; /* Xanh navy */
+  color: #003087;
   padding: 1.5rem;
 }
 
@@ -94,9 +89,9 @@
 .error {
   text-align: center;
   font-size: 1rem;
-  color: #721c24; /* Đỏ đậm */
+  color: #721c24;
   padding: 0.75rem;
-  background-color: #f8d7da; /* Nền đỏ nhạt */
+  background-color: #f8d7da;
   border: 1px solid #f5c6cb;
   border-radius: 6px;
   margin-bottom: 1.5rem;
@@ -107,198 +102,39 @@
   text-align: center;
   font-size: 1rem;
   font-weight: 500;
-  color: #155724; /* Xanh lá đậm */
-  background-color: #d4edda; /* Nền xanh lá nhạt */
+  color: #155724;
+  background-color: #d4edda;
   padding: 0.75rem;
   border: 1px solid #c3e6cb;
   border-radius: 6px;
   margin-bottom: 1.5rem;
 }
 
-/* Main Layout (for UserLayout) */
-.contentWrapper {
-  position: relative;
-  background-color: #f9f9f9; /* Nền nhạt */
-}
-
-.layoutContainer {
-  display: flex;
-  min-height: 100vh;
-  position: relative;
-}
-
-/* Sidebar Styles (for UserLayout) */
-.sidebarUser {
-  background-color: #ffffff;
-  border-right: 1px solid #e0e0e0;
-  width: 250px;
-  flex-shrink: 0;
-  padding: 1.5rem;
-}
-
-.sidebarHeader {
-  padding: 1rem 0;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
-  text-align: center;
-}
-
-.sidebarTitle {
-  color: #6c757d; /* Xám trung tính */
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-
-.sidebarUsername {
-  color: #003087; /* Xanh navy */
-  font-weight: 600;
-  font-size: 1.2rem;
-  margin: 0;
-}
-
-/* Sidebar Navigation (for UserLayout) */
-.sidebarNav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.navSection {
-  margin-bottom: 0.75rem;
-}
-
-.navCollapseButton {
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.95rem;
-  color: #333333; /* Xám đậm */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 6px;
-}
-
-.navCollapseContent {
-  padding-left: 1.5rem;
-}
-
-.navLink {
-  display: block;
-  padding: 0.5rem 0.75rem;
-  color: #333333; /* Xám đậm */
-  font-size: 0.9rem;
-  text-decoration: none;
-  border-radius: 6px;
-}
-
-.navLink i {
-  color: #005580; /* Xanh đậm */
-  width: 20px;
-  text-align: center;
-}
-
-/* Main Content (for UserLayout) */
-.mainContent {
-  flex-grow: 1;
-  padding: 2rem 1.5rem;
-  background-color: #ffffff;
-  min-height: 100vh;
-}
-
-/* Mobile Styles (for UserLayout) */
-@media (max-width: 767px) {
-  .layoutContainer {
-    flex-direction: column;
-    position: relative;
-  }
-
-  .sidebarUser {
-    width: 250px;
-    transform: translateX(-100%);
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    overflow-y: auto;
-    border-right: 1px solid #e0e0e0;
-  }
-
-  .sidebarUser.show {
-    transform: translateX(0);
-  }
-
-  .mainContent.hiddenMobile {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .mainContent {
-    padding: 1.5rem 1rem;
-    margin-top: 50px;
-  }
-
-  .sidebarToggle {
-    background-color: #005580; /* Xanh đậm */
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 110;
-  }
-}
-
-@media (min-width: 768px) {
-  .sidebarToggle {
-    display: none;
-  }
-
-  .sidebarUser {
-    transform: translateX(0) !important;
-    position: relative;
-  }
-
-  .mainContent {
-    margin-top: 0;
-  }
-}
-
-/* Responsive for User Info Table */
+/* Responsive Adjustments */
 @media (max-width: 576px) {
   .formBox {
     padding: 1rem;
     margin: 1rem;
-  }
-
-  .userInfo {
-    display: block; /* Chuyển sang dọc trên mobile */
+    max-width: 100%; /* Full width on small screens */
   }
 
   .infoItem {
-    display: block;
-    margin-bottom: 0.5rem;
-  }
-
-  .infoLabel,
-  .infoValue {
-    display: block;
-    width: 100%;
+    flex-direction: column;
     padding: 0.5rem;
   }
 
   .infoLabel {
+    flex: 0 0 100%; /* Full width for label on mobile */
+    margin-bottom: 0.25rem;
     background-color: transparent;
-    font-weight: 500;
+  }
+
+  .infoValue {
+    flex: 0 0 100%; /* Full width for value on mobile */
+  }
+
+  .avatarImage {
+    width: 80px;
+    height: 80px;
   }
 }

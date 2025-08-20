@@ -178,41 +178,72 @@ const exportDegreesToExcel = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Degrees');
 
+    // Add header row explicitly with centered alignment
+    const headerRow = worksheet.addRow([
+      'Loại văn bằng',
+      'Đơn vị cấp',
+      'Tên người nhận',
+      'Xếp loại',
+      'Số hiệu',
+      'Số vào sổ',
+      'Ngày cấp',
+      'Trạng thái',
+    ]);
+
+    // Apply styling to header row (only columns A to H)
+    headerRow.eachCell((cell, colNumber) => {
+      if (colNumber <= 8) {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B619D' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      }
+    });
+
+    // Define columns with widths
     worksheet.columns = [
+      { header: 'Loại văn bằng', key: 'degreeType', width: 30 },
+      { header: 'Đơn vị cấp', key: 'issuer', width: 30 },
       { header: 'Tên người nhận', key: 'recipientName', width: 30 },
+      { header: 'Xếp loại', key: 'level', width: 15 },
       { header: 'Số hiệu', key: 'serialNumber', width: 20 },
       { header: 'Số vào sổ', key: 'registryNumber', width: 20 },
       { header: 'Ngày cấp', key: 'issueDate', width: 15 },
       { header: 'Trạng thái', key: 'status', width: 15 },
-      { header: 'Loại văn bằng', key: 'degreeType', width: 30 },
-      { header: 'Đơn vị cấp', key: 'issuer', width: 30 },
-      { header: 'Xếp loại', key: 'level', width: 15 },
-      { header: 'Chữ ký số', key: 'digitalSignature', width: 50 },
     ];
 
+    // Add data rows
     degrees.forEach((degree) => {
       worksheet.addRow({
+        degreeType: degree.degreeType?.title || 'N/A',
+        issuer: degree.issuer?.name || 'N/A',
         recipientName: degree.recipientName,
+        level: degree.level || 'N/A',
         serialNumber: degree.serialNumber,
         registryNumber: degree.registryNumber,
         issueDate: new Date(degree.issueDate).toLocaleDateString('vi-VN'),
         status: degree.status === 'Pending' ? 'Chờ duyệt' : degree.status === 'Approved' ? 'Đã duyệt' : 'Đã từ chối',
-        degreeType: degree.degreeType?.title || 'N/A',
-        issuer: degree.issuer?.name || 'N/A',
-        level: degree.level || 'N/A',
-        digitalSignature: degree.digitalSignature || 'N/A',
       });
     });
 
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B619D' } };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    });
-
+    // Ensure column alignment for data
     worksheet.columns.forEach((column) => {
       column.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
     });
+
+    // Insert title rows at the beginning
+    worksheet.spliceRows(1, 0, ['']); // Create space for titles
+    worksheet.spliceRows(1, 0, ['']); // Create space for titles
+    const newTitleRow1 = worksheet.getRow(1);
+    newTitleRow1.values = ['Trung Tâm Công Nghệ Phần Mềm Đại Học Cần Thơ'];
+    newTitleRow1.font = { bold: true, size: 16 };
+    newTitleRow1.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.mergeCells('A1:H1');
+
+    const newTitleRow2 = worksheet.getRow(2);
+    newTitleRow2.values = ['Can Tho University Software Center'];
+    newTitleRow2.font = { bold: true, size: 13 };
+    newTitleRow2.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.mergeCells('A2:H2');
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

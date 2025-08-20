@@ -381,9 +381,6 @@ const AddDegree = () => {
           <button className={`btn ${styles.bthThembangcap}`} onClick={() => navigate('/listdegree')}>
             <i className="fas fa-arrow-left"></i> Quay lại
           </button>
-          <button className={`btn ${styles.bthThembangcap}`}>
-            <i className="fas fa-file-import"></i> Mẫu Import
-          </button>
         </div>
 
         {error && <div className="alert alert-danger">{error}</div>}

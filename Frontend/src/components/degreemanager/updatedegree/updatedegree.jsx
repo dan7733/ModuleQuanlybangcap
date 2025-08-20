@@ -338,9 +338,9 @@ const UpdateDegree = () => {
       'Degree not found': 'Không tìm thấy văn bằng.',
       'Permission denied': 'Bạn không có quyền cập nhật văn bằng này.',
       'Email does not match authenticated user': 'Email không khớp với người dùng đã đăng nhập.',
-      'Digital signature is invalid': 'Chữ ký số không hợp lệ.',
       'No digital signature found': 'Không có chữ ký số.',
       'Invalid degree ID': 'ID văn bằng không hợp lệ.',
+      'Digital signature is invalid': 'Chữ ký số không hợp lệ! đã bị thay đổi hoặc không hợp lệ.',
     };
     return errorMap[serverMessage] || 'Cập nhật văn bằng thất bại. Vui lòng thử lại.';
   };
@@ -357,6 +357,7 @@ const UpdateDegree = () => {
       'Error uploading file to Mega.nz': 'Lỗi khi tải file lên Mega.nz.',
       'Error syncing file from Mega.nz': 'Lỗi khi đồng bộ file từ Mega.nz.',
       'Error deleting file from Mega.nz': 'Lỗi khi xóa file trên Mega.nz.',
+      'Digital signature is invalid': 'Chữ ký số không hợp lệ! đã bị thay đổi hoặc không hợp lệ.',
     };
     return errorMap[serverMessage] || 'Đồng bộ file thất bại. Vui lòng thử lại.';
   };
@@ -366,6 +367,7 @@ const UpdateDegree = () => {
       'Digital signature is valid': 'Chữ ký số hợp lệ.',
       'Signature is valid': 'Chữ ký số hợp lệ.',
       'Degree status updated successfully': 'Cập nhật trạng thái văn bằng thành công!',
+      'Digital signature is invalid': 'Chữ ký số không hợp lệ! đã bị thay đổi hoặc không hợp lệ.',
     };
     return successMap[serverMessage] || serverMessage;
   };

@@ -60,9 +60,8 @@ const ListDegree = () => {
     }
   }, [user, navigate]);
 
-  // Fetch issuers for filter dropdown (admin only)
+  // Fetch issuers for filter dropdown (both admin and manager)
   const fetchIssuers = useCallback(async () => {
-    if (user.role !== 'admin') return;
     const token = getAccessToken();
     if (!token) return;
     try {
@@ -79,7 +78,7 @@ const ListDegree = () => {
       console.error('Error fetching issuers:', err);
       setError('Lỗi khi tải danh sách tổ chức. Vui lòng thử lại.');
     }
-  }, [user.role]);
+  }, []);
 
   // Fetch degree types based on issuer
   const fetchDegreeTypes = useCallback(async () => {
@@ -87,9 +86,7 @@ const ListDegree = () => {
     if (!token) return;
     try {
       const params = {};
-      if (user.role === 'manager' && user.issuerId) {
-        params.issuerId = user.issuerId;
-      } else if (filterIssuer) {
+      if (filterIssuer) {
         params.issuerId = filterIssuer;
       } else {
         setDegreeTypes([]);
@@ -111,7 +108,7 @@ const ListDegree = () => {
       setError('Lỗi khi tải danh sách loại văn bằng. Vui lòng thử lại.');
       setDegreeTypes([]);
     }
-  }, [user.role, user.issuerId, filterIssuer]);
+  }, [filterIssuer]);
 
   // Fetch distinct issue years
   const fetchIssueYears = useCallback(async () => {
@@ -119,9 +116,7 @@ const ListDegree = () => {
     if (!token) return;
     try {
       const params = {};
-      if (user.role === 'manager' && user.issuerId) {
-        params.issuerId = user.issuerId;
-      } else if (user.role === 'admin' && filterIssuer) {
+      if (filterIssuer) {
         params.issuerId = filterIssuer;
       }
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/degrees/years`, {
@@ -140,7 +135,7 @@ const ListDegree = () => {
       setError('Lỗi khi tải danh sách năm cấp. Vui lòng thử lại.');
       setIssueYears([]);
     }
-  }, [user.role, user.issuerId, filterIssuer]);
+  }, [filterIssuer]);
 
   // Fetch degrees with pagination, filtering, and sorting
   const fetchDegrees = useCallback(async () => {
@@ -158,8 +153,7 @@ const ListDegree = () => {
       const params = { page: currentPage, limit, sort: sortOrder };
       if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       if (filterStatus) params.status = filterStatus;
-      if (user.role === 'admin' && filterIssuer) params.issuerId = filterIssuer;
-      if (user.role === 'manager' && user.issuerId) params.issuerId = user.issuerId;
+      if (filterIssuer) params.issuerId = filterIssuer;
       if (filterDegreeType) params.degreeTypeId = filterDegreeType;
       if (filterIssueYear) params.issueYear = filterIssueYear;
 
@@ -186,7 +180,7 @@ const ListDegree = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate, currentPage, debouncedSearchTerm, filterStatus, filterIssuer, filterDegreeType, filterIssueYear, sortOrder, user]);
+  }, [navigate, currentPage, debouncedSearchTerm, filterStatus, filterIssuer, filterDegreeType, filterIssueYear, sortOrder]);
 
   // Fetch data on mount and when dependencies change
   useEffect(() => {
@@ -230,7 +224,7 @@ const ListDegree = () => {
     setSearchParams(newParams);
   };
 
-  // Handle issuer filter (admin only)
+  // Handle issuer filter (both admin and manager)
   const handleIssuerFilterChange = (e) => {
     const value = e.target.value;
     setFilterIssuer(value);
@@ -298,8 +292,7 @@ const ListDegree = () => {
       const params = {};
       if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       if (filterStatus) params.status = filterStatus;
-      if (user.role === 'admin' && filterIssuer) params.issuerId = filterIssuer;
-      if (user.role === 'manager' && user.issuerId) params.issuerId = user.issuerId;
+      if (filterIssuer) params.issuerId = filterIssuer;
       if (filterDegreeType) params.degreeTypeId = filterDegreeType;
       if (filterIssueYear) params.issueYear = filterIssueYear;
       params.sort = sortOrder;
@@ -538,28 +531,26 @@ const ListDegree = () => {
               <option value="Approved">Đã duyệt</option>
               <option value="Rejected">Đã từ chối</option>
             </select>
-            {user.role === 'admin' && (
-              <select
-                className={styles.filterSelect}
-                value={filterIssuer}
-                onChange={handleIssuerFilterChange}
-                aria-label="Lọc theo đơn vị cấp"
-                disabled={loading}
-              >
-                <option value="">Tất cả đơn vị cấp</option>
-                {issuers.map((issuer) => (
-                  <option key={issuer._id} value={issuer._id}>
-                    {issuer.name}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select
+              className={styles.filterSelect}
+              value={filterIssuer}
+              onChange={handleIssuerFilterChange}
+              aria-label="Lọc theo đơn vị cấp"
+              disabled={loading}
+            >
+              <option value="">Tất cả đơn vị cấp</option>
+              {issuers.map((issuer) => (
+                <option key={issuer._id} value={issuer._id}>
+                  {issuer.name}
+                </option>
+              ))}
+            </select>
             <select
               className={styles.filterSelect}
               value={filterDegreeType}
               onChange={handleDegreeTypeFilterChange}
               aria-label="Lọc theo loại văn bằng"
-              disabled={loading || (!filterIssuer && user.role === 'admin') || degreeTypes.length === 0}
+              disabled={loading || (!filterIssuer && issuers.length > 0) || degreeTypes.length === 0}
             >
               <option value="">Tất cả loại văn bằng</option>
               {degreeTypes.map((type) => (

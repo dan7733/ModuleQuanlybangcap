@@ -383,7 +383,7 @@ const ListDegreetype = () => {
                         <button
                           className={styles.btnDanger}
                           onClick={() => handleDeleteClick(degreeType._id)}
-                          disabled={loading || user.role !== 'admin'}
+                          disabled={loading}
                         >
                           Xóa
                         </button>

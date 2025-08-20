@@ -34,10 +34,12 @@
   color: #333;
   text-decoration: none;
   display: block;
+  cursor: pointer; /* Thêm con trỏ pointer */
 }
 
 .dropdownItem:hover {
-  background-color: #f5f5f5;
+  background-color: #f5f5f5; /* Màu nền khi hover */
+  color: #0a60a9; /* Tùy chọn thay đổi màu chữ khi hover */
 }
 
 .avatar {
@@ -104,7 +106,7 @@
   }
 
   .mobileHeaderTop {
-    justify-content: flex-end !important; /* Căn phải */
+    justify-content: flex-end !important;
     align-items: center;
   }
 
@@ -126,13 +128,13 @@
   }
 
   .languageButton {
-    padding: 4px 12px; /* Đồng bộ với nút người dùng */
-    font-size: 14px; /* Đồng bộ với nút người dùng */
+    padding: 4px 12px;
+    font-size: 14px;
   }
 
   .detailproduct-login-mobile button,
   .detailproduct-login-mobile .dropdown button {
-    padding: 4px 12px; /* Đồng bộ với languageButton */
-    font-size: 14px; /* Đồng bộ với languageButton */
+    padding: 4px 12px;
+    font-size: 14px;
   }
 }

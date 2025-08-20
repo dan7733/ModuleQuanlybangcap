@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
     roleid: {
       type: Number,
       required: true,
-      enum: [0, 1, 2, 3],
+      enum: [0, 1, 2, 3], // 0: user, 1: certifier, 2: manager, 3: admin
     },
     googleid: {
       type: String,

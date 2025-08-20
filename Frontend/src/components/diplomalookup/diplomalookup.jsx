@@ -111,7 +111,7 @@ const DiplomaLookup = () => {
         setError('');
         setLoading(true);
         try {
-          const response = await axios.get(`${API_URL}/api/v1/degree/${id}`);
+          const response = await axios.get(`${API_URL}/api/v1/public/degree/${id}`);
           if (response.data.errCode === 0) {
             setDegrees([response.data.data]);
             setSelectedDegree(response.data.data);
@@ -158,7 +158,7 @@ const DiplomaLookup = () => {
     }
 
     try {
-      const response = await axios.get(`${API_URL}/api/v1/degrees`, {
+      const response = await axios.get(`${API_URL}/api/v1/public/degrees`, {
         params: {
           fullname: formData.serialNumber ? '' : formData.fullname,
           dob: formData.serialNumber ? '' : formData.dob,
@@ -187,7 +187,7 @@ const DiplomaLookup = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v1/degree/${id}`);
+      const response = await axios.get(`${API_URL}/api/v1/public/approveddegree/${id}`);
       if (response.data.errCode === 0) {
         setSelectedDegree(response.data.data);
         setError('');
@@ -209,33 +209,42 @@ const DiplomaLookup = () => {
     if (qrCanvasRef.current) {
       const canvas = qrCanvasRef.current.querySelector('canvas');
       if (canvas) {
-        // Create a new canvas to combine QR code, logo, and text
         const newCanvas = document.createElement('canvas');
         const ctx = newCanvas.getContext('2d');
-        newCanvas.width = 300;
-        newCanvas.height = 400;
+        newCanvas.width = 400;
+        newCanvas.height = 500;
 
-        // Fill background
+        // Disable image smoothing for sharper QR code
+        ctx.imageSmoothingEnabled = false;
+
+        // Draw white background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
 
-        // Draw QR code
-        ctx.drawImage(canvas, 50, 50, 200, 200);
-
-        // Load and draw logo
+        // Draw logo
         const logoImg = new Image();
         logoImg.src = logo;
         logoImg.onload = () => {
-          ctx.drawImage(logoImg, 100, 260, 100, 100);
+          ctx.drawImage(logoImg, 20, 20, 70, 70);
 
-          // Draw text
+          // Draw university name
           ctx.fillStyle = '#0b619d';
-          ctx.font = 'bold 16px Arial';
+          ctx.font = 'bold 20px "Times New Roman"';
+          ctx.textAlign = 'right';
+          ctx.fillText('ĐẠI HỌC CẦN THƠ', newCanvas.width - 20, 50);
+
+          // Draw QR code
+          ctx.drawImage(canvas, 75, 110, 250, 250);
+
+          // Draw text below QR code
+          ctx.fillStyle = '#0b619d';
+          ctx.font = 'bold 16px "Times New Roman"';
           ctx.textAlign = 'center';
-          ctx.fillText('Đại học Cần Thơ', newCanvas.width / 2, 380);
+          ctx.fillText(`Đơn vị cấp: ${selectedQrDegree.issuerName || 'CUSC'}`, newCanvas.width / 2, 380);
+          ctx.fillText(`Số hiệu: ${selectedQrDegree.serialNumber}`, newCanvas.width / 2, 400);
 
           // Download the combined image
-          const dataUrl = newCanvas.toDataURL('image/png');
+          const dataUrl = newCanvas.toDataURL('image/png', 1.0);
           const link = document.createElement('a');
           link.href = dataUrl;
           link.download = `qr-code-${selectedQrDegree._id}.png`;
@@ -265,7 +274,7 @@ const DiplomaLookup = () => {
 
             const degreeId = result.getText().split('/').pop();
             try {
-              const response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`);
+              const response = await axios.get(`${API_URL}/api/v1/public/degree/${degreeId}`);
               if (response.data.errCode === 0) {
                 setDegrees([response.data.data]);
                 setQrSuccess(true);
@@ -316,7 +325,7 @@ const DiplomaLookup = () => {
 
         const degreeId = result.getText().split('/').pop();
         try {
-          const response = await axios.get(`${API_URL}/api/v1/degree/${degreeId}`);
+          const response = await axios.get(`${API_URL}/api/v1/public/degree/${degreeId}`);
           if (response.data.errCode === 0) {
             setDegrees([response.data.data]);
             setQrSuccess(true);
@@ -591,6 +600,8 @@ const DiplomaLookup = () => {
                 <thead className="table-secondary">
                   <tr>
                     <th>#</th>
+                    <th>Tên người nhận</th>
+                    <th>Ngày sinh</th>
                     <th>Tên văn bằng</th>
                     <th>Chuyên ngành</th>
                     <th>Cấp độ</th>
@@ -604,6 +615,8 @@ const DiplomaLookup = () => {
                     degrees.map((degree, index) => (
                       <tr key={degree._id}>
                         <td>{index + 1}</td>
+                        <td>{degree.recipientName || 'N/A'}</td>
+                        <td>{degree.recipientDob ? new Date(degree.recipientDob).toLocaleDateString() : 'N/A'}</td>
                         <td>{degree.degreeTypeName || 'N/A'}</td>
                         <td>{degree.major || 'N/A'}</td>
                         <td>{degree.level || 'N/A'}</td>
@@ -630,7 +643,7 @@ const DiplomaLookup = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7">Không tìm thấy văn bằng</td>
+                      <td colSpan="9">Không tìm thấy văn bằng</td>
                     </tr>
                   )}
                 </tbody>
@@ -640,7 +653,7 @@ const DiplomaLookup = () => {
         </div>
 
         {selectedDegree && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal fade show d-block mt-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
@@ -648,13 +661,22 @@ const DiplomaLookup = () => {
                   <button type="button" className="btn-close" onClick={closeModal}></button>
                 </div>
                 <div className="modal-body">
-                  <p className={styles.universityTitle}>Đại học Cần Thơ</p>
-                  <p><strong>Tên văn bằng:</strong> {selectedDegree.degreeTypeName || 'N/A'}</p>
-                  <p><strong>Chuyên ngành:</strong> {selectedDegree.major || 'N/A'}</p>
-                  <p><strong>Cấp độ:</strong> {selectedDegree.level || 'N/A'}</p>
-                  <p><strong>Ngày cấp:</strong> {new Date(selectedDegree.issueDate).toLocaleDateString()}</p>
-                  <p><strong>Số hiệu:</strong> {selectedDegree.serialNumber}</p>
-                  <p><strong>Đơn vị cấp:</strong> {selectedDegree.issuerName || 'N/A'}</p>
+                  <div className={styles.diplomaHeader}>
+                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.diplomaLogo} />
+                    <h2 className={styles.universityTitle}>Đại học Cần Thơ</h2>
+                  </div>
+                  <div className={styles.diplomaContent}>
+                    <p><strong>Tên người nhận:</strong> <span>{selectedDegree.recipientName || 'N/A'}</span></p>
+                    <p><strong>Ngày sinh:</strong> <span>{selectedDegree.recipientDob ? new Date(selectedDegree.recipientDob).toLocaleDateString() : 'N/A'}</span></p>
+                    <p><strong>Nơi sinh:</strong> <span>{selectedDegree.placeOfBirth || 'N/A'}</span></p>
+                    <p><strong>Tên văn bằng:</strong> <span>{selectedDegree.degreeTypeName || 'N/A'}</span></p>
+                    <p><strong>Chuyên ngành:</strong> <span>{selectedDegree.major || 'N/A'}</span></p>
+                    <p><strong>Xếp loại:</strong> <span>{selectedDegree.level || 'N/A'}</span></p>
+                    <p><strong>Số hiệu:</strong> <span>{selectedDegree.serialNumber || 'N/A'}</span></p>
+                    <p><strong>Số đăng ký:</strong> <span>{selectedDegree.registryNumber || 'N/A'}</span></p>
+                    <p><strong>Ngày cấp:</strong> <span>{selectedDegree.issueDate ? new Date(selectedDegree.issueDate).toLocaleDateString() : 'N/A'}</span></p>
+                    <p><strong>Đơn vị cấp:</strong> <span>{selectedDegree.issuerName || 'N/A'}</span></p>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={closeModal}>
@@ -667,18 +689,24 @@ const DiplomaLookup = () => {
         )}
 
         {selectedQrDegree && (
-          <div className={`modal fade show d-block qr-modal`} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className={`modal fade show d-block mt-0 ${styles.qrModal}`} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Mã QR Văn bằng</h5>
                   <button type="button" className="btn-close" onClick={closeQrModal}></button>
                 </div>
-                <div className="modal-body text-center">
-                  <p className={styles.universityTitle}>Đại học Cần Thơ</p>
-                  <p><strong>Đơn vị cấp văn bằng:</strong> {selectedQrDegree.issuerName || 'CUSC'}</p>
-                  <div ref={qrCanvasRef}>
-                    <QRCodeCanvas value={`${WEBSITE_URL}/degree/${selectedQrDegree._id}`} size={200} />
+                <div className="modal-body">
+                  <div className={styles.diplomaHeader}>
+                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.diplomaLogo} />
+                    <h2 className={styles.universityTitle}>Đại học Cần Thơ</h2>
+                  </div>
+                  <div className={styles.diplomaContent}>
+                    <p><strong>Đơn vị cấp:</strong> <span>{selectedQrDegree.issuerName || 'CUSC'}</span></p>
+                    <div className={styles.qrCodeContainer} ref={qrCanvasRef}>
+                      <QRCodeCanvas value={`${WEBSITE_URL}/degree/${selectedQrDegree._id}`} size={200} />
+                    </div>
+                    <p><strong>Số hiệu:</strong> <span>{selectedQrDegree.serialNumber}</span></p>
                   </div>
                 </div>
                 <div className="modal-footer">

@@ -1,35 +1,42 @@
 /* Modal Styling for Chi tiết văn bằng and Mã QR Văn bằng */
 .modal-content {
-  background: linear-gradient(135deg, #e6f0fa 0%, #ffffff 100%), url('../../assets/logo/logoDHCT.png') no-repeat center top;
+  background: linear-gradient(135deg, #0b619d 0%, #e6f0fa 100%), url('../../assets/logo/logoDHCT.png') no-repeat center center;
+  background-size: cover;
   background-color: #e6f0fa;
-  background-size: 50% auto;
-  border: 2px solid #0b619d;
+  border: 5px double #FFD700; /* Double gold border for elegance */
   border-radius: 15px;
-  box-shadow: 0 6px 25px rgba(11, 97, 157, 0.3);
-  padding: 25px;
+  box-shadow: 0 10px 30px rgba(11, 97, 157, 0.4);
+  padding: 30px;
+  position: relative;
   overflow: hidden;
 }
 
 .modal-header {
-  border-bottom: 3px solid #0b619d;
+  border-bottom: 3px solid #FFD700;
   background-color: transparent;
-  padding-bottom: 15px;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modal-title {
   color: #0b619d;
   font-weight: bold;
-  font-size: 1.7rem;
+  font-size: 1.8rem;
+  font-family: 'Times New Roman', Times, serif;
   text-align: center;
   width: 100%;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
 .btn-close {
   background-color: #0b619d;
   color: white;
   border-radius: 50%;
+  width: 30px;
+  height: 30px;
   opacity: 0.9;
   transition: opacity 0.3s ease;
 }
@@ -40,66 +47,81 @@
 
 .modal-body {
   color: #333;
-  font-size: 1.2rem;
-  line-height: 1.8;
-  background-color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  line-height: 2;
+  background-color: rgba(255, 255, 255, 0.85);
   border-radius: 10px;
-  padding: 20px;
+  padding: 25px;
+  font-family: 'Times New Roman', Times, serif;
 }
 
-.modal-body p {
+.diplomaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 3px double #FFD700;
+}
+
+.diplomaLogo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.universityTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0b619d;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.diplomaContent p {
   margin: 15px 0;
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px dashed #0b619d;
+  border-bottom: 1px solid #0b619d;
   padding-bottom: 10px;
   transition: all 0.3s ease;
 }
 
-.modal-body p:hover {
-  background-color: rgba(11, 97, 157, 0.05);
+.diplomaContent p:hover {
+  background-color: rgba(11, 97, 157, 0.1);
 }
 
-.modal-body p strong {
+.diplomaContent p strong {
   color: #0b619d;
   font-weight: 600;
-  flex: 0 0 35%;
+  flex: 0 0 40%;
   text-align: right;
-  padding-right: 10px;
+  padding-right: 15px;
 }
 
-.modal-body p span {
+.diplomaContent p span {
   flex: 1;
   text-align: left;
-  padding-left: 10px;
+  padding-left: 15px;
 }
 
-.modal-body p:last-child {
+.diplomaContent p:last-child {
   border-bottom: none;
 }
 
-.modal-body .university-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #0b619d;
-  text-align: center;
-  margin-bottom: 20px;
-  border-bottom: 3px solid #0b619d;
-  padding-bottom: 12px;
-  text-transform: uppercase;
-}
-
 .modal-footer {
-  border-top: 3px solid #0b619d;
-  padding-top: 15px;
-  background-color: rgba(255, 255, 255, 0.9);
+  border-top: 3px solid #FFD700;
+  padding: 15px 20px;
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .modal-footer .btn-primary {
   background-color: #0b619d;
   border-color: #0b619d;
   font-weight: bold;
-  padding: 12px 25px;
+  font-family: 'Times New Roman', Times, serif;
+  padding: 12px 30px;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
@@ -114,7 +136,8 @@
   background-color: #6c757d;
   border-color: #6c757d;
   font-weight: bold;
-  padding: 12px 25px;
+  font-family: 'Times New Roman', Times, serif;
+  padding: 12px 30px;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
@@ -126,17 +149,76 @@
 }
 
 /* QR Code Modal Specific Styling */
-.qr-modal .modal-body {
-  text-align: center;
+.qrModal .modal-content {
+  background: linear-gradient(135deg, #0b619d 0%, #e6f0fa 100%), url('../../assets/logo/logoDHCT.png') no-repeat center center;
+  background-size: cover;
+  background-color: #e6f0fa;
+  border: 5px double #FFD700;
+  padding: 20px;
 }
 
-.qr-modal .modal-body p {
-  justify-content: center;
-  font-weight: bold;
+.qrModal .modal-dialog {
+  max-width: 500px; /* Same size as Chi tiết văn bằng */
+}
+
+.qrModal .modal-body {
+  text-align: center;
+  font-size: 1.1rem; /* Smaller font size for simplicity */
+  padding: 20px;
+}
+
+.qrModal .diplomaHeader {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #FFD700;
+}
+
+.qrModal .diplomaLogo {
+  width: 60px; /* Smaller logo */
+  height: 60px;
+}
+
+.qrModal .universityTitle {
+  font-size: 1.5rem; /* Smaller title */
+  letter-spacing: 1.5px;
+}
+
+.qrModal .diplomaContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrModal .diplomaContent p {
+  justify-content: space-between;
+  font-weight: 500; /* Less bold for simplicity */
   color: #0b619d;
-  font-size: 1.3rem;
-  margin-bottom: 25px;
-  border-bottom: none;
+  font-size: 1.1rem;
+  margin: 10px 0;
+  border-bottom: 1px solid #0b619d;
+  padding-bottom: 5px;
+  width: 80%;
+}
+
+.qrModal .diplomaContent p strong {
+  flex: 0 0 40%;
+  text-align: right;
+  padding-right: 10px;
+}
+
+.qrModal .diplomaContent p span {
+  flex: 1;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.qrCodeContainer {
+  margin: 15px 0;
+  padding: 8px;
+  background-color: #fff;
+  border: 2px solid #FFD700;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Existing styles retained and adjusted for consistency */

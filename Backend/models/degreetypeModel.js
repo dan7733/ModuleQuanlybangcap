@@ -146,18 +146,18 @@ const updateDegreeType = async (userId, degreeTypeId, degreeTypeData) => {
   }
 };
 
-// Delete degree type (for admin only)
+// Delete degree type (for admin or certifier with matching issuerId)
 const deleteDegreeType = async (userId, degreeTypeId) => {
   try {
-    // Check if user is admin (roleid = 3)
+    // Check if user exists and has appropriate role (certifier or admin)
     const user = await mongoose.model('User').findById(userId).lean();
     if (!user) {
       logger.error(`User not found with ID: ${userId}`);
       throw new Error('User not found');
     }
-    if (user.roleid !== 3) {
+    if (![1, 3].includes(user.roleid)) {
       logger.error(`User ${userId} is not authorized to delete degree type`);
-      throw new Error('Only admin can delete degree type');
+      throw new Error('Only certifier or admin can delete degree type');
     }
 
     // Validate degreeTypeId
@@ -171,6 +171,12 @@ const deleteDegreeType = async (userId, degreeTypeId) => {
     if (!degreeType) {
       logger.error(`DegreeType not found for ID: ${degreeTypeId}`);
       throw new Error('DegreeType not found');
+    }
+
+    // For certifier (roleid = 1), check if issuerId matches
+    if (user.roleid === 1 && user.issuerId.toString() !== degreeType.issuerId.toString()) {
+      logger.error(`User ${userId} does not belong to issuer ${degreeType.issuerId}`);
+      throw new Error('User does not belong to this issuer');
     }
 
     // Check if degree type is used in any Degree

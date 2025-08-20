@@ -100,22 +100,22 @@ const updateDegreeTypeAPI = async (req, res) => {
 };
 
 const deleteDegreeTypeAPI = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const { id } = req.params;
-        const result = await deleteDegreeType(userId, id);
-        logger.info(`Degree type deleted successfully`, { id, user: req.user.email });
-        return res.status(200).json({
-            errCode: 0,
-            message: result.message,
-        });
-    } catch (error) {
-        logger.error(`Error deleting degree type`, { error, user: req.user?.email });
-        return res.status(400).json({
-            errCode: 1,
-            message: error.message || 'Error deleting degree type',
-        });
-    }
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const result = await deleteDegreeType(userId, id);
+    logger.info(`Degree type deleted successfully`, { id, user: req.user.email });
+    return res.status(200).json({
+      errCode: 0,
+      message: result.message,
+    });
+  } catch (error) {
+    logger.error(`Error deleting degree type`, { error, user: req.user?.email });
+    return res.status(400).json({
+      errCode: 1,
+      message: error.message || 'Error deleting degree type',
+    });
+  }
 };
 
 const getDegreeTypeByIdAPI = async (req, res) => {

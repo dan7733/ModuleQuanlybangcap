@@ -12,6 +12,7 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { loginContext, refreshAccessToken } = useContext(Context);
   const navigate = useNavigate();
 
@@ -23,6 +24,7 @@ const Login = () => {
     async (response) => {
       console.log('Google response:', response, { timestamp: new Date().toISOString() });
       try {
+        setIsSubmitting(true);
         const { credential } = response;
         if (!credential || typeof credential !== 'string' || credential.split('.').length !== 3) {
           throw new Error('Invalid JWT format');
@@ -47,11 +49,9 @@ const Login = () => {
           email: googleResponse.data.userDetails.email,
           fullname: googleResponse.data.userDetails.fullname,
           avatar: googleResponse.data.userDetails.avatar,
-          username: googleResponse.data.userDetails.email, // Giả sử username = email
         };
 
         await loginContext(userData, true);
-
         await refreshAccessToken();
 
         const userResponse = await account();
@@ -67,7 +67,6 @@ const Login = () => {
             fullname: userResponse.data.data.fullname,
             avatar: userResponse.data.data.avatar,
             role: userResponse.data.data.role,
-            username: userResponse.data.data.user, // Giả sử username = email
           },
           true
         );
@@ -75,9 +74,11 @@ const Login = () => {
       } catch (err) {
         console.error('Google login error:', err, { timestamp: new Date().toISOString() });
         setErrorMessage('Đăng nhập Google không thành công. Vui lòng thử lại!');
+      } finally {
+        setIsSubmitting(false);
       }
     },
-    [setErrorMessage, loginContext, refreshAccessToken, navigate]
+    [loginContext, refreshAccessToken, navigate]
   );
 
   useEffect(() => {
@@ -123,6 +124,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setIsSubmitting(true);
 
     const newErrors = {};
     if (!email.trim()) {
@@ -136,6 +138,7 @@ const Login = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      setIsSubmitting(false);
       return;
     }
 
@@ -161,11 +164,9 @@ const Login = () => {
       const userData = {
         accessToken: loginResponse.data.accessToken,
         email: email,
-        username: email, // Giả sử username = email
       };
 
       await loginContext(userData, remember);
-
       await refreshAccessToken();
 
       const userResponse = await account();
@@ -179,7 +180,7 @@ const Login = () => {
           email: userResponse.data.data.user,
           fullname: userResponse.data.data.fullname,
           avatar: userResponse.data.data.avatar,
-          role: userResponse.data.data.role
+          role: userResponse.data.data.role,
         },
         remember
       );
@@ -203,11 +204,13 @@ const Login = () => {
       } else {
         setErrorMessage('Đăng nhập không thành công. Vui lòng thử lại!');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={`container-fluid ${styles.loginContainer}`}>
+    <div className={`${styles.loginContainer}`}>
       <div className='row g-0 min-vh-100'>
         <div
           className={`col-md-8 ${styles.leftImage}`}
@@ -233,6 +236,7 @@ const Login = () => {
                     placeholder='Email'
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
                   />
                   {errors.email && <div className='text-danger small mt-1'>{errors.email}</div>}
                 </div>
@@ -243,6 +247,7 @@ const Login = () => {
                     placeholder='Mật khẩu'
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
                   />
                   {errors.password && <div className='text-danger small mt-1'>{errors.password}</div>}
                 </div>
@@ -253,13 +258,22 @@ const Login = () => {
                     id='rememberMe'
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
+                    disabled={isSubmitting}
                   />
                   <label className='form-check-label' htmlFor='rememberMe'>
                     Ghi nhớ đăng nhập
                   </label>
                 </div>
-                <button type='submit' className={`btn ${styles.btnLogin} w-100 mb-2`}>
-                  Xác nhận
+                <button
+                  type='submit'
+                  className={`btn ${styles.btnLogin} w-100 mb-2`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    'Xác nhận'
+                  )}
                 </button>
                 <hr />
                 <div id='googleSignInButton' className='mb-2'></div>

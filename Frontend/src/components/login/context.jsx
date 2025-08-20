@@ -10,23 +10,22 @@ const SECRET_KEY = process.env.REACT_APP_STORAGE_SECRET;
 const ContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(() => {
-    // Kiểm tra dữ liệu người dùng từ localStorage hoặc sessionStorage
     const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       try {
-        // Giải mã dữ liệu người dùng bằng CryptoJS với khóa SECRET_KEY
+        if (!SECRET_KEY) {
+          console.error('SECRET_KEY is not defined', { timestamp: new Date().toISOString() });
+          return { auth: false, email: '' };
+        }
         const bytes = CryptoJS.AES.decrypt(savedUser, SECRET_KEY);
-        // Parse chuỗi giải mã thành object JSON
         return JSON.parse(bytes.toString(CryptoJS.enc.Utf8)) || { auth: false, email: '' };
       } catch (error) {
         console.error('Error decrypting user data:', error, {
           timestamp: new Date().toISOString(),
         });
-        // Nếu giải mã thất bại (khóa sai, dữ liệu hỏng), trả về trạng thái mặc định
         return { auth: false, email: '' };
       }
     }
-    // Nếu không có dữ liệu, trả về trạng thái mặc định
     return { auth: false, email: '' };
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -44,26 +43,30 @@ const ContextProvider = ({ children }) => {
     }
   };
 
-  const refreshAccessToken = useCallback(async () => {
+  const refreshAccessToken = useCallback(async (retryCount = 0) => {
+    const maxRetries = 3;
+    if (!SECRET_KEY) {
+      console.error('SECRET_KEY is not defined', { timestamp: new Date().toISOString() });
+      throw new Error('Encryption key missing');
+    }
     setIsLoading(true);
     console.log('Attempting to refresh access token...', { timestamp: new Date().toISOString() });
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/refresh-token`, {
         withCredentials: true,
       });
+      console.log('Refresh token response:', response.data, { timestamp: new Date().toISOString() });
       const { accessToken } = response.data;
       if (!accessToken) {
         throw new Error('No access token returned from refresh');
       }
       setUser((prevUser) => {
-        // Cập nhật user state với accessToken mới
         const updatedUser = { ...prevUser, accessToken, auth: true };
-        // Chọn storage (localStorage hoặc sessionStorage) dựa trên nơi lưu dữ liệu trước đó
         const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
-        // Mã hóa dữ liệu người dùng bằng CryptoJS trước khi lưu vào storage
         const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(updatedUser), SECRET_KEY).toString();
         storage.setItem('user', encryptedData);
         console.log('Access token refreshed successfully:', {
+          email: updatedUser.email,
           timestamp: new Date().toISOString(),
         });
         return updatedUser;
@@ -73,8 +76,13 @@ const ContextProvider = ({ children }) => {
       console.error('Failed to refresh access token:', {
         message: error.message,
         response: error.response?.data,
+        status: error.response?.status,
         timestamp: new Date().toISOString(),
       });
+      if (retryCount < maxRetries && error.response?.status === 401) {
+        console.warn(`Retry ${retryCount + 1} for token refresh`, { timestamp: new Date().toISOString() });
+        return refreshAccessToken(retryCount + 1);
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -96,7 +104,10 @@ const ContextProvider = ({ children }) => {
         console.log('Refreshing token on app load...', { timestamp: new Date().toISOString() });
         await refreshAccessToken();
 
-        const token = user.accessToken;
+        const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user') || '{}';
+        const bytes = CryptoJS.AES.decrypt(savedUser, SECRET_KEY);
+        const parsedUser = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        const token = parsedUser.accessToken;
         const userResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/account`, {
           withCredentials: true,
           headers: { Authorization: `Bearer ${token}` },
@@ -105,7 +116,6 @@ const ContextProvider = ({ children }) => {
           throw new Error('Invalid account data');
         }
         setUser((prevUser) => {
-          // Cập nhật user state với thông tin từ API
           const updatedUser = {
             ...prevUser,
             email: userResponse.data.data.user,
@@ -114,9 +124,7 @@ const ContextProvider = ({ children }) => {
             role: userResponse.data.data.role,
             auth: true,
           };
-          // Chọn storage (localStorage hoặc sessionStorage)
           const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
-          // Mã hóa dữ liệu người dùng bằng CryptoJS trước khi lưu
           const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(updatedUser), SECRET_KEY).toString();
           storage.setItem('user', encryptedData);
           console.log('Account information retrieved:', {
@@ -146,27 +154,25 @@ const ContextProvider = ({ children }) => {
 
     const expTime = getTokenExpiration(user.accessToken);
     const now = Date.now();
-    const buffer = 5 * 60 * 1000; // Refresh 5 minutes before expiration
+    const buffer = 5 * 60 * 1000; // Refresh 5 phút trước khi hết hạn
     const timeUntilRefresh = expTime - now - buffer;
 
-    if (timeUntilRefresh > 0) {
-      const timeout = setTimeout(async () => {
-        try {
-          console.log('Proactively refreshing token...', { timestamp: new Date().toISOString() });
-          await refreshAccessToken();
-        } catch (error) {
-          console.error('Proactive refresh failed:', error, { timestamp: new Date().toISOString() });
-          await logoutContext();
-          navigate('/login');
-        }
-      }, timeUntilRefresh);
-      return () => clearTimeout(timeout);
-    } else if (expTime > now) {
-      refreshAccessToken().catch(async (error) => {
-        console.error('Immediate refresh failed:', error, { timestamp: new Date().toISOString() });
+    const attemptRefresh = async () => {
+      try {
+        console.log('Proactively refreshing token...', { timestamp: new Date().toISOString() });
+        await refreshAccessToken();
+      } catch (error) {
+        console.error('Refresh failed:', error, { timestamp: new Date().toISOString() });
         await logoutContext();
         navigate('/login');
-      });
+      }
+    };
+
+    if (expTime <= now) {
+      attemptRefresh(); // Làm mới ngay nếu token đã hết hạn
+    } else if (timeUntilRefresh > 0) {
+      const timeout = setTimeout(attemptRefresh, timeUntilRefresh);
+      return () => clearTimeout(timeout);
     }
   }, [user.auth, user.accessToken, refreshAccessToken, navigate]);
 
@@ -179,9 +185,7 @@ const ContextProvider = ({ children }) => {
     }
     const newUser = { ...userData, auth: true };
     setUser(newUser);
-    // Chọn storage dựa trên tùy chọn remember (localStorage nếu remember=true, sessionStorage nếu false)
     const storage = remember ? localStorage : sessionStorage;
-    // Mã hóa dữ liệu người dùng bằng CryptoJS trước khi lưu vào storage
     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(newUser), SECRET_KEY).toString();
     storage.setItem('user', encryptedData);
   };
@@ -195,7 +199,6 @@ const ContextProvider = ({ children }) => {
       });
     }
     setUser({ email: '', auth: false });
-    // Xóa dữ liệu người dùng khỏi localStorage và sessionStorage khi đăng xuất
     localStorage.removeItem('user');
     sessionStorage.removeItem('user');
   };
