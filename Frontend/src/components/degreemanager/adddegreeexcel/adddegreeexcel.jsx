@@ -21,6 +21,19 @@ const AddDegreeExcel = () => {
   const [success, setSuccess] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
 
+  // Ánh xạ mã lỗi và thông báo từ server sang tiếng Việt
+  const errorMessages = {
+    1: {
+      "Missing excel file, issuerId, or degreeTypeId": "Thiếu tệp Excel, đơn vị cấp, hoặc loại văn bằng.",
+      "Invalid issuerId or degreeTypeId": "Đơn vị cấp hoặc loại văn bằng không hợp lệ.",
+      "Invalid Excel file: No worksheet found": "Tệp Excel không hợp lệ: Không tìm thấy bảng tính.",
+      "No valid data found in Excel file": "Không tìm thấy dữ liệu hợp lệ trong tệp Excel.",
+      "Number of images does not match the number of valid rows in Excel": (data) => 
+        `Số lượng ảnh hoặc PDF (${data.imageCount}) không khớp với số dòng hợp lệ trong tệp Excel (${data.rowCount}). Vui lòng kiểm tra lại.`,
+    },
+    "default": "Lỗi không xác định khi nhập văn bằng. Vui lòng thử lại hoặc liên hệ hỗ trợ."
+  };
+
   // Hàm để lấy accessToken từ localStorage hoặc sessionStorage
   const getAccessToken = () => {
     const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -40,6 +53,10 @@ const AddDegreeExcel = () => {
       const fetchIssuers = async () => {
         try {
           const token = getAccessToken();
+          if (!token) {
+            setError("Không tìm thấy token. Vui lòng đăng nhập lại.");
+            return;
+          }
           const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/v1/issuers`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -58,6 +75,10 @@ const AddDegreeExcel = () => {
       const fetchDegreeTypes = async () => {
         try {
           const token = getAccessToken();
+          if (!token) {
+            setError("Không tìm thấy token. Vui lòng đăng nhập lại.");
+            return;
+          }
           const response = await axios.get(
             `${process.env.REACT_APP_API_URL}/api/v1/degree-types/by-issuer?issuerId=${selectedIssuer}`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -102,12 +123,14 @@ const AddDegreeExcel = () => {
   };
 
   const handleImageDirChange = (event) => {
-    const files = Array.from(event.target.files).filter(file => file.type.startsWith("image/"));
+    const files = Array.from(event.target.files).filter(file => 
+      file.type.startsWith("image/") || file.type === "application/pdf"
+    );
     if (files.length > 0) {
       setSelectedImageDir(files);
       setError("");
     } else {
-      setError("Thư mục không chứa ảnh hợp lệ.");
+      setError("Thư mục không chứa ảnh hoặc PDF hợp lệ.");
       setSelectedImageDir([]);
     }
   };
@@ -122,7 +145,7 @@ const AddDegreeExcel = () => {
       return;
     }
     if (selectedImageDir.length > 0 && !selectedFile) {
-      setError("Vui lòng chọn tệp Excel khi tải lên thư mục ảnh.");
+      setError("Vui lòng chọn tệp Excel khi tải lên thư mục ảnh hoặc PDF.");
       return;
     }
 
@@ -133,6 +156,12 @@ const AddDegreeExcel = () => {
 
     try {
       const token = getAccessToken();
+      if (!token) {
+        setError("Không tìm thấy token. Vui lòng đăng nhập lại.");
+        setLoading(false);
+        return;
+      }
+
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("issuerId", selectedIssuer);
@@ -157,7 +186,15 @@ const AddDegreeExcel = () => {
       if (response.data.errCode === 0) {
         setSuccess(`Thành công! Đã nhập ${response.data.data.successCount} văn bằng.`);
         if (response.data.data.errors && response.data.data.errors.length > 0) {
-          setErrorDetails(response.data.data.errors);
+          const translatedErrors = response.data.data.errors.map((err) => {
+            if (err.includes("Missing or invalid")) {
+              return err.replace("Missing or invalid", "Thiếu hoặc không hợp lệ");
+            } else if (err.includes("Serial number or registry number already exists")) {
+              return err.replace("Serial number or registry number already exists", "Số hiệu hoặc số vào sổ đã tồn tại");
+            }
+            return err;
+          });
+          setErrorDetails(translatedErrors);
           setError("Một số dòng dữ liệu gặp lỗi, kiểm tra chi tiết bên dưới.");
         }
         setSelectedFile(null);
@@ -167,12 +204,49 @@ const AddDegreeExcel = () => {
         setSelectedDegreeType("");
         setSelectedIssuer("");
       } else {
-        setError("Lỗi khi nhập văn bằng từ tệp Excel. Vui lòng kiểm tra lại.");
-        if (response.data.data?.errors) setErrorDetails(response.data.data.errors);
+        const errMessage = errorMessages[response.data.errCode]?.[response.data.message] || errorMessages.default;
+        if (typeof errMessage === "function") {
+          setError(errMessage(response.data.data));
+        } else {
+          setError(errMessage);
+        }
+        if (response.data.data?.errors) {
+          const translatedErrors = response.data.data.errors.map((err) => {
+            if (err.includes("Missing or invalid")) {
+              return err.replace("Missing or invalid", "Thiếu hoặc không hợp lệ");
+            } else if (err.includes("Serial number or registry number already exists")) {
+              return err.replace("Serial number or registry number already exists", "Số hiệu hoặc số vào sổ đã tồn tại");
+            }
+            return err;
+          });
+          setErrorDetails(translatedErrors);
+        }
       }
     } catch (err) {
-      setError("Lỗi kết nối khi gửi tệp Excel hoặc thư mục ảnh. Vui lòng thử lại.");
-      if (err.response?.status === 401) navigate("/"); // Fixed syntax error
+      if (err.response?.status === 401) {
+        setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+        navigate("/");
+      } else {
+        const errMessage = err.response?.data?.message
+          ? (errorMessages[err.response.data.errCode]?.[err.response.data.message] || errorMessages.default)
+          : "Lỗi kết nối khi gửi tệp Excel hoặc thư mục ảnh/PDF. Vui lòng thử lại.";
+        if (typeof errMessage === "function") {
+          setError(errMessage(err.response?.data?.data));
+        } else {
+          setError(errMessage);
+        }
+        if (err.response?.data?.data?.errors) {
+          const translatedErrors = err.response.data.data.errors.map((err) => {
+            if (err.includes("Missing or invalid")) {
+              return err.replace("Missing or invalid", "Thiếu hoặc không hợp lệ");
+            } else if (err.includes("Serial number or registry number already exists")) {
+              return err.replace("Serial number or registry number already exists", "Số hiệu hoặc số vào sổ đã tồn tại");
+            }
+            return err;
+          });
+          setErrorDetails(translatedErrors);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -189,9 +263,11 @@ const AddDegreeExcel = () => {
   return (
     <div className={styles.container}>
       {loading && (
-        <div className={styles.loadingOverlay}>
-          <div className={styles.loader}></div>
-          <p className={styles.loadingText}>Đang xử lý, vui lòng đợi...</p>
+        <div className={styles.fullScreenLoading}>
+          <div className={styles.loadingContent}>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>Đang tải...</p>
+          </div>
         </div>
       )}
 
@@ -314,7 +390,7 @@ const AddDegreeExcel = () => {
         </div>
 
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Tải Thư Mục Ảnh</h3>
+          <h3 className={styles.sectionTitle}>Tải Thư Mục Ảnh hoặc PDF</h3>
           <div className={styles.buttonGroup}>
             <input
               type="file"
@@ -324,7 +400,7 @@ const AddDegreeExcel = () => {
               webkitdirectory="true"
               directory="true"
               multiple
-              accept="image/*"
+              accept="image/*,application/pdf"
               disabled={loading}
             />
             <button
@@ -333,12 +409,12 @@ const AddDegreeExcel = () => {
               onClick={handleImageDirClick}
               disabled={loading}
             >
-              <i className="fas fa-folder"></i> Chọn Thư Mục Ảnh
+              <i className="fas fa-folder"></i> Chọn Thư Mục Ảnh/PDF
             </button>
           </div>
           {selectedImageDir.length > 0 && (
             <div className={styles.fileList}>
-              <p>Đã chọn {selectedImageDir.length} ảnh:</p>
+              <p>Đã chọn {selectedImageDir.length} file (ảnh hoặc PDF):</p>
               <ul>
                 {selectedImageDir.slice(0, 5).map((file, index) => (
                   <li key={index}>{file.webkitRelativePath || file.name}</li>
@@ -348,7 +424,7 @@ const AddDegreeExcel = () => {
             </div>
           )}
           <div className={styles.alertInfo}>
-            <strong>Lưu ý:</strong> Tên file ảnh phải khớp với <code>serialNumber</code> hoặc <code>registryNumber</code> trong tệp Excel (ví dụ: "ABC123.jpg" cho <code>serialNumber</code> là "ABC123"). Điều này giúp hệ thống tự động ghép ảnh với dữ liệu.
+            <strong>Lưu ý:</strong> Tên file ảnh hoặc PDF phải khớp với <code>serialNumber</code> hoặc <code>registryNumber</code> trong tệp Excel (ví dụ: "ABC123.jpg" hoặc "ABC123.pdf" cho <code>serialNumber</code> là "ABC123"). Điều này giúp hệ thống tự động ghép file với dữ liệu.
           </div>
         </div>
       </div>

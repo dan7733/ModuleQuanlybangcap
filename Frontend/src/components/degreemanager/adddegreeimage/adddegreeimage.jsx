@@ -6,26 +6,21 @@ import CryptoJS from 'crypto-js';
 
 // Hàm để lấy accessToken từ localStorage hoặc sessionStorage
 const getAccessToken = () => {
-  // Lấy dữ liệu người dùng từ localStorage hoặc sessionStorage
   const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
   if (!userData) return null;
   try {
-    // Kiểm tra xem khóa bí mật có được định nghĩa không
     if (!process.env.REACT_APP_STORAGE_SECRET) {
       console.error('REACT_APP_STORAGE_SECRET không được định nghĩa', {
         timestamp: new Date().toISOString(),
       });
       return null;
     }
-    // Giải mã dữ liệu người dùng bằng CryptoJS với khóa bí mật
     const user = JSON.parse(CryptoJS.AES.decrypt(userData, process.env.REACT_APP_STORAGE_SECRET).toString(CryptoJS.enc.Utf8));
-    // Trả về accessToken nếu có, ngược lại trả về null
     return user?.accessToken || null;
   } catch (error) {
     console.error('Lỗi khi giải mã dữ liệu người dùng:', error, {
       timestamp: new Date().toISOString(),
     });
-    // Xóa dữ liệu không hợp lệ khỏi localStorage và sessionStorage
     localStorage.removeItem('user');
     sessionStorage.removeItem('user');
     return null;
@@ -37,7 +32,7 @@ const errorMessages = {
   1: 'Thiếu thông tin bắt buộc (ví dụ: Tên người nhận, Số hiệu, Số vào sổ).',
   2: 'Số hiệu hoặc Số vào sổ đã tồn tại trong hệ thống.',
   3: 'Đơn vị cấp hoặc loại văn bằng không hợp lệ.',
-  4: 'Lỗi khi trích xuất thông tin từ ảnh.',
+  4: 'Lỗi khi trích xuất thông tin từ ảnh hoặc PDF.',
   'N/A': 'Lỗi không xác định. Vui lòng thử lại hoặc liên hệ hỗ trợ.'
 };
 
@@ -45,7 +40,7 @@ const AddDegreeImage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [folderFiles, setFolderFiles] = useState([]);
   const [issuers, setIssuers] = useState([]);
@@ -59,7 +54,6 @@ const AddDegreeImage = () => {
 
   // Kiểm tra quyền truy cập
   useEffect(() => {
-    // Lấy dữ liệu người dùng từ localStorage hoặc sessionStorage và giải mã
     const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (!userData) {
       console.log('Không tìm thấy dữ liệu người dùng, chuyển hướng về trang chủ');
@@ -67,9 +61,7 @@ const AddDegreeImage = () => {
       return;
     }
     try {
-      // Giải mã dữ liệu người dùng bằng CryptoJS
       const storedUser = JSON.parse(CryptoJS.AES.decrypt(userData, process.env.REACT_APP_STORAGE_SECRET).toString(CryptoJS.enc.Utf8));
-      // Kiểm tra quyền admin hoặc manager
       if (!storedUser || !storedUser.auth || !['admin', 'manager'].includes(storedUser.role)) {
         console.log('Quyền truy cập bị từ chối:', { auth: storedUser.auth, role: storedUser.role });
         navigate('/');
@@ -78,7 +70,6 @@ const AddDegreeImage = () => {
       console.error('Lỗi khi giải mã dữ liệu người dùng trong kiểm tra quyền:', error, {
         timestamp: new Date().toISOString(),
       });
-      // Xóa dữ liệu không hợp lệ và chuyển hướng về trang chủ
       localStorage.removeItem('user');
       sessionStorage.removeItem('user');
       navigate('/');
@@ -89,7 +80,6 @@ const AddDegreeImage = () => {
   useEffect(() => {
     const fetchIssuers = async () => {
       try {
-        // Lấy accessToken để gọi API
         const token = getAccessToken();
         if (!token) {
           setError('Không tìm thấy token. Vui lòng đăng nhập lại.');
@@ -118,7 +108,6 @@ const AddDegreeImage = () => {
     if (selectedIssuer) {
       const fetchDegreeTypes = async () => {
         try {
-          // Lấy accessToken để gọi API
           const token = getAccessToken();
           if (!token) {
             setError('Không tìm thấy token. Vui lòng đăng nhập lại.');
@@ -149,19 +138,23 @@ const AddDegreeImage = () => {
   const handleFileClick = () => fileInputRef.current.click();
   const handleFolderClick = () => folderInputRef.current.click();
 
-  const handleImageChange = (event) => {
+  const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setSelectedImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+      setSelectedFile(file);
+      if (file.type.startsWith('image/')) {
+        setPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setPreviewUrl(null); // Không hiển thị preview cho PDF
+      }
       setFolderFiles([]);
       setAddedDegrees([]);
       setError('');
       setSuccess('');
     } else {
-      alert('Chỉ chấp nhận định dạng ảnh (.jpg, .png, .jpeg, ...)');
+      alert('Chỉ chấp nhận định dạng ảnh (.jpg, .png, .jpeg, ...) hoặc PDF.');
       event.target.value = '';
-      setSelectedImage(null);
+      setSelectedFile(null);
       setPreviewUrl(null);
       setError('Định dạng file không hợp lệ.');
     }
@@ -169,26 +162,26 @@ const AddDegreeImage = () => {
 
   const handleFolderChange = (event) => {
     const files = Array.from(event.target.files).filter(file =>
-      file.type.startsWith('image/')
+      file.type.startsWith('image/') || file.type === 'application/pdf'
     );
     if (files.length > 0) {
       setFolderFiles(files);
-      setSelectedImage(null);
+      setSelectedFile(null);
       setPreviewUrl(null);
       setAddedDegrees([]);
       setError('');
       setSuccess('');
     } else {
-      alert('Thư mục không chứa ảnh hợp lệ.');
+      alert('Thư mục không chứa ảnh hoặc PDF hợp lệ.');
       setFolderFiles([]);
-      setError('Thư mục không chứa ảnh hợp lệ.');
+      setError('Thư mục không chứa ảnh hoặc PDF hợp lệ.');
     }
   };
 
   const handleUploadSingle = async () => {
-    if (!selectedImage) {
-      alert('Vui lòng chọn ảnh để tải lên.');
-      setError('Không có ảnh được chọn.');
+    if (!selectedFile) {
+      alert('Vui lòng chọn ảnh hoặc PDF để tải lên.');
+      setError('Không có file được chọn.');
       return;
     }
     if (!selectedIssuer || !selectedDegreeType) {
@@ -202,14 +195,13 @@ const AddDegreeImage = () => {
     setSuccess('');
 
     try {
-      // Lấy accessToken để gọi API
       const token = getAccessToken();
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.');
       }
 
       const formData = new FormData();
-      formData.append('image', selectedImage);
+      formData.append('image', selectedFile); // Sử dụng 'image' để backend xử lý cả ảnh và PDF
       formData.append('issuerId', selectedIssuer);
       formData.append('degreeTypeId', selectedDegreeType);
 
@@ -233,14 +225,14 @@ const AddDegreeImage = () => {
       if (response.data.errCode === 0) {
         setSuccess('Tạo văn bằng thành công!');
         setAddedDegrees([{ ...response.data.data, status: 'success' }]);
-        setSelectedImage(null);
+        setSelectedFile(null);
         setPreviewUrl(null);
         fileInputRef.current.value = '';
       } else {
-        const errorMessage = errorMessages[response.data.errCode] || 'Lỗi khi xử lý ảnh. Vui lòng kiểm tra lại.';
+        const errorMessage = errorMessages[response.data.errCode] || 'Lỗi khi xử lý ảnh hoặc PDF. Vui lòng kiểm tra lại.';
         setError(errorMessage);
         setAddedDegrees([{
-          fileName: selectedImage.name,
+          fileName: selectedFile.name,
           error: errorMessage,
           errCode: response.data.errCode || 'N/A',
           data: response.data.data || {},
@@ -248,11 +240,11 @@ const AddDegreeImage = () => {
         }]);
       }
     } catch (err) {
-      console.error('Lỗi khi tải lên ảnh:', err.response?.data || err.message);
-      const errorMessage = errorMessages[err.response?.data?.errCode] || 'Lỗi khi tải lên ảnh. Vui lòng thử lại.';
+      console.error('Lỗi khi tải lên file:', err.response?.data || err.message);
+      const errorMessage = errorMessages[err.response?.data?.errCode] || 'Lỗi khi tải lên file. Vui lòng thử lại.';
       setError(errorMessage);
       setAddedDegrees([{
-        fileName: selectedImage.name,
+        fileName: selectedFile.name,
         error: errorMessage,
         errCode: err.response?.data?.errCode || 'N/A',
         data: err.response?.data?.data || {},
@@ -265,7 +257,7 @@ const AddDegreeImage = () => {
 
   const handleUploadFolder = async () => {
     if (folderFiles.length === 0) {
-      alert('Vui lòng chọn thư mục chứa ảnh.');
+      alert('Vui lòng chọn thư mục chứa ảnh hoặc PDF.');
       setError('Không có thư mục được chọn.');
       return;
     }
@@ -280,7 +272,6 @@ const AddDegreeImage = () => {
     setSuccess('');
 
     try {
-      // Lấy accessToken để gọi API
       const token = getAccessToken();
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.');
@@ -318,7 +309,7 @@ const AddDegreeImage = () => {
             newDegrees.push({ ...response.data.data, status: 'success' });
             successCount++;
           } else {
-            const errorMessage = errorMessages[response.data.errCode] || 'Lỗi khi xử lý ảnh. Vui lòng kiểm tra lại.';
+            const errorMessage = errorMessages[response.data.errCode] || 'Lỗi khi xử lý ảnh hoặc PDF. Vui lòng kiểm tra lại.';
             newDegrees.push({
               fileName: file.name,
               error: errorMessage,
@@ -330,7 +321,7 @@ const AddDegreeImage = () => {
           }
         } catch (err) {
           console.error(`Lỗi khi xử lý ${file.name}:`, err.response?.data || err.message);
-          const errorMessage = errorMessages[err.response?.data?.errCode] || 'Lỗi khi tải lên ảnh. Vui lòng thử lại.';
+          const errorMessage = errorMessages[err.response?.data?.errCode] || 'Lỗi khi tải lên file. Vui lòng thử lại.';
           newDegrees.push({
             fileName: file.name,
             error: errorMessage,
@@ -342,7 +333,7 @@ const AddDegreeImage = () => {
         }
       }
 
-      const summaryMessage = `Đã xử lý ${folderFiles.length} ảnh: ${successCount} thành công, ${errorCount} thất bại.`;
+      const summaryMessage = `Đã xử lý ${folderFiles.length} file: ${successCount} thành công, ${errorCount} thất bại.`;
       setSuccess(summaryMessage);
       setAddedDegrees(newDegrees);
       setFolderFiles([]);
@@ -357,14 +348,11 @@ const AddDegreeImage = () => {
 
   return (
     <div className={styles.appContainer}>
-      {/* Loading Indicator */}
       {loading && (
-        <div className={styles.loadingOverlay}>
+        <div className={styles.fullScreenLoading}>
           <div className={styles.loadingContent}>
-            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-              <span className="visually-hidden">Đang xử lý...</span>
-            </div>
-            <p className={styles.loadingText}>Đang xử lý, vui lòng đợi...</p>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>Đang tải...</p>
           </div>
         </div>
       )}
@@ -372,10 +360,9 @@ const AddDegreeImage = () => {
       <div className={styles.mainContent}>
         <div className={styles.contentWrapper}>
           <h1 className="text-center mb-4" style={{ color: '#0B619D' }}>
-            <i className="fas fa-image"></i> Tải Ảnh Văn Bằng
+            <i className="fas fa-image"></i> Tải Ảnh hoặc PDF Văn Bằng
           </h1>
 
-          {/* Lựa chọn đơn vị cấp và loại văn bằng */}
           <div className={styles.uploadSection}>
             <h3 className={styles.sectionTitle}>Chọn đơn vị cấp và loại văn bằng</h3>
             <div className="row mb-3">
@@ -418,16 +405,15 @@ const AddDegreeImage = () => {
             </div>
           </div>
 
-          {/* Thêm Ảnh Đơn */}
           <div className={styles.uploadSection}>
-            <h3 className={styles.sectionTitle}>Thêm Ảnh</h3>
+            <h3 className={styles.sectionTitle}>Thêm Ảnh hoặc PDF</h3>
             <div className={styles.buttonGroup}>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 ref={fileInputRef}
                 className="d-none"
-                onChange={handleImageChange}
+                onChange={handleFileChange}
                 disabled={loading}
               />
               <button
@@ -436,32 +422,37 @@ const AddDegreeImage = () => {
                 onClick={handleFileClick}
                 disabled={loading}
               >
-                <i className="fas fa-image"></i> Chọn Ảnh
+                <i className="fas fa-file"></i> Chọn File
               </button>
               <button
                 type="button"
                 className={styles.uploadButton}
                 onClick={handleUploadSingle}
-                disabled={!selectedImage || !selectedIssuer || !selectedDegreeType || loading}
+                disabled={!selectedFile || !selectedIssuer || !selectedDegreeType || loading}
               >
                 <i className="fas fa-upload"></i> Tải Lên
               </button>
             </div>
-            {selectedImage && (
+            {selectedFile && (
               <div className={styles.previewContainer}>
                 <p className={styles.previewText}>
-                  Ảnh đã chọn: <span className={styles.fileName}>{selectedImage.name}</span>
+                  File đã chọn: <span className={styles.fileName}>{selectedFile.name}</span>
                 </p>
-                <img
-                  src={previewUrl}
-                  alt="Xem trước"
-                  className={styles.previewImageSmall}
-                />
+                {selectedFile.type.startsWith('image/') ? (
+                  <img
+                    src={previewUrl}
+                    alt="Xem trước"
+                    className={styles.previewImageSmall}
+                  />
+                ) : (
+                  <a href={previewUrl || '#'} target="_blank" rel="noopener noreferrer" className={styles.previewLink}>
+                    Xem file PDF
+                  </a>
+                )}
               </div>
             )}
           </div>
 
-          {/* Thêm Thư Mục */}
           <div className={styles.uploadSection}>
             <h3 className={styles.sectionTitle}>Thêm Thư Mục</h3>
             <div className={styles.buttonGroup}>
@@ -473,7 +464,7 @@ const AddDegreeImage = () => {
                 webkitdirectory="true"
                 directory="true"
                 multiple
-                accept="image/*"
+                accept="image/*,application/pdf"
                 disabled={loading}
               />
               <button
@@ -495,7 +486,7 @@ const AddDegreeImage = () => {
             </div>
             {folderFiles.length > 0 && (
               <div className={styles.fileListContainer}>
-                <p className={styles.fileCount}>Đã chọn {folderFiles.length} ảnh:</p>
+                <p className={styles.fileCount}>Đã chọn {folderFiles.length} file:</p>
                 <ul className={styles.fileList}>
                   {folderFiles.slice(0, 5).map((file, index) => (
                     <li key={index} className={styles.fileItem}>
@@ -508,11 +499,9 @@ const AddDegreeImage = () => {
             )}
           </div>
 
-          {/* Hiển thị thông báo lỗi/thành công */}
           {error && <div className="alert alert-danger mt-3">{error}</div>}
           {success && <div className="alert alert-success mt-3">{success}</div>}
 
-          {/* Hiển thị thông tin văn bằng vừa được thêm */}
           {addedDegrees.length > 0 && (
             <div className={styles.uploadSection}>
               <h3 className={styles.sectionTitle}>Thông tin văn bằng vừa thêm</h3>
@@ -522,7 +511,7 @@ const AddDegreeImage = () => {
                     {degree.status === 'error' ? (
                       <>
                         <p className="text-danger">
-                          <strong>Lỗi xử lý ảnh:</strong> {degree.fileName}
+                          <strong>Lỗi xử lý file:</strong> {degree.fileName}
                         </p>
                         <p className="text-danger">
                           <strong>Mã lỗi:</strong> {degree.errCode}
@@ -573,7 +562,6 @@ const AddDegreeImage = () => {
             </div>
           )}
 
-          {/* Nút Quay Lại */}
           <div className={styles.backButtonWrapper}>
             <button
               type="button"

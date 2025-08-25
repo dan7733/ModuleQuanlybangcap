@@ -17,27 +17,55 @@ const storage = (folder) => multer.diskStorage({
   },
 });
 
-// Kiểm tra loại file dựa trên route
+// Kiểm tra loại file dựa trên route và fieldname
 const fileFilter = (req, file, cb) => {
   const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
   const allowedExcelTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
     'application/vnd.ms-excel', // .xls
   ];
+  const allowedDegreeTypes = [...allowedImageTypes, 'application/pdf']; // Allow PDFs for degree routes
 
   const isExcelRoute = req.path.includes('/degree/import-excel');
-  const isImageRoute = req.path.includes('/degree/extract') || req.path.match(/\/degree\/[0-9a-fA-F]{24}$/);
-  const isProfileRoute = req.path.includes('/users/update-profile'); // Add profile route check
+  const isImageRoute = req.path.includes('/users/update-profile');
+  const isDegreeRoute = req.path === '/degree' || req.path.match(/\/degree\/[0-9a-fA-F]{24}$/) || req.path.includes('/degree/extract');
 
-  logger.info(`Processing file upload: MIME type=${file.mimetype}, Route=${req.path}`);
+  logger.info(`Processing file upload: MIME type=${file.mimetype}, Route=${req.path}, Field=${file.fieldname}`);
 
-  if (isExcelRoute && (allowedExcelTypes.includes(file.mimetype) || allowedImageTypes.includes(file.mimetype))) {
-    cb(null, true); // Accept Excel or image files for import-excel
-  } else if ((isImageRoute || isProfileRoute) && allowedImageTypes.includes(file.mimetype)) {
-    cb(null, true); // Accept image files for extract, update degree, and update profile
+  if (isExcelRoute) {
+    if (file.fieldname === 'file' && allowedExcelTypes.includes(file.mimetype)) {
+      cb(null, true); // Accept Excel files for 'file' field
+    } else if (file.fieldname === 'images' && allowedDegreeTypes.includes(file.mimetype)) {
+      cb(null, true); // Accept images or PDFs for 'images' field
+    } else {
+      logger.warn(`Invalid file type: ${file.mimetype} for field ${file.fieldname} in route ${req.path}`);
+      cb(
+        new Error(
+          `Only ${
+            file.fieldname === 'file'
+              ? 'Excel (.xlsx, .xls)'
+              : 'image files (JPEG, PNG, GIF, WebP, BMP) or PDF'
+          } are allowed for ${file.fieldname} field.`
+        ),
+        false
+      );
+    }
+  } else if (isImageRoute && allowedImageTypes.includes(file.mimetype)) {
+    cb(null, true); // Accept image files for update profile
+  } else if (isDegreeRoute && allowedDegreeTypes.includes(file.mimetype)) {
+    cb(null, true); // Accept image or PDF files for degree creation/update/extract
   } else {
     logger.warn(`Invalid file type: ${file.mimetype} for route ${req.path}`);
-    cb(new Error(`Only ${isExcelRoute ? 'Excel (.xlsx, .xls) or image files' : 'image files (JPEG, PNG, GIF, WebP, BMP)'} are allowed.`), false);
+    cb(
+      new Error(
+        `Only ${
+          isDegreeRoute
+            ? 'image files (JPEG, PNG, GIF, WebP, BMP) or PDF'
+            : 'image files (JPEG, PNG, GIF, WebP, BMP)'
+        } are allowed.`
+      ),
+      false
+    );
   }
 };
 

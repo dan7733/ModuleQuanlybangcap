@@ -4,9 +4,12 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install --only=production
+# CÀI CẢ devDependencies để có @babel/node
+RUN npm ci
 
 COPY . .
+
+ENV NODE_ENV=development
 
 EXPOSE 3000
 

@@ -287,8 +287,8 @@ const Login = () => {
             <div className='text-center mt-4'>
               <small>
                 All Rights Reserved. Developed by{' '}
-                <Link to='/cusc' className={styles.link}>
-                  Cusc
+                <Link to='/' className={styles.link}>
+                  CUSC
                 </Link>
               </small>
             </div>

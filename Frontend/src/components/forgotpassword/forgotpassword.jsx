@@ -13,7 +13,7 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Hàm ánh xạ thông báo từ server sang tiếng Việt (lỗi và thành công)
+  // Hàm ánh xạ thông báo từ server sang tiếng Việt
   const translateServerMessage = (englishMessage) => {
     const messageTranslations = {
       'Please provide an email!': 'Vui lòng cung cấp email!',
@@ -23,79 +23,87 @@ const ForgotPassword = () => {
       'Account not activated!': 'Tài khoản chưa được kích hoạt!',
       'Password reset email has been sent!': 'Email đặt lại mật khẩu đã được gửi!',
       'Server error': 'Lỗi máy chủ, vui lòng thử lại sau!',
-      // Thêm các thông báo khác nếu cần
     };
     return messageTranslations[englishMessage] || 'Có lỗi xảy ra. Vui lòng thử lại sau!';
   };
 
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setSuccessMessage('');
+    setErrorMessage('');
+    setIsLoading(true);
 
-    // Kiểm tra email cục bộ
+    const newErrors = {};
     if (!email.trim()) {
       newErrors.email = 'Email là bắt buộc';
-    } else if (!emailRegex.test(email)) {
+    } else if (!validateEmail(email)) {
       newErrors.email = 'Email không hợp lệ';
     }
 
     setErrors(newErrors);
-    setSuccessMessage('');
-    setErrorMessage('');
 
-    if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
-      try {
-        const response = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/v1/forgot-password`,
-          { email },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+    if (Object.keys(newErrors).length > 0) {
+      setIsLoading(false);
+      return;
+    }
 
-        // Ghi log phản hồi từ server để debug
-        console.log('Server response:', response.data);
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/forgot-password`,
+        { email },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-        if (response.data.errCode === 0) {
-          setSuccessMessage(translateServerMessage(response.data.message));
-          setTimeout(() => navigate('/login'), 3000);
-        } else {
-          setErrorMessage(translateServerMessage(response.data.message));
-        }
-      } catch (error) {
-        // Ghi log lỗi để debug
-        console.error('Error response:', error.response?.data || error.message);
+      console.log('Server response:', response.data, { timestamp: new Date().toISOString() });
 
-        setErrorMessage(
-          translateServerMessage(error.response?.data?.message || 'Server error')
-        );
-      } finally {
-        setIsLoading(false);
+      if (response.data.errCode === 0) {
+        setSuccessMessage(translateServerMessage(response.data.message));
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        setErrorMessage(translateServerMessage(response.data.message));
       }
+    } catch (error) {
+      console.error('Error response:', error.response?.data || error.message, {
+        timestamp: new Date().toISOString(),
+      });
+      setErrorMessage(
+        translateServerMessage(error.response?.data?.message || 'Server error')
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className={`container-fluid ${styles.loginContainer}`}>
-      <div className="row g-0">
-        {/* Hình nền bên trái */}
+    <div className={`${styles.loginContainer}`}>
+      <div className="row g-0 min-vh-100">
         <div
           className={`col-md-8 ${styles.leftImage}`}
           style={{ backgroundImage: `url(${bgImage})` }}
         ></div>
-
-        {/* Form bên phải */}
-        <div className={`col-md-4 ${styles.rightPanel}`}>
+        <div className="col-md-4 d-flex align-items-center justify-content-center">
           <div className="w-100 px-3 text-center">
             <img src={logo} alt="Logo" className={styles.logo} />
             <h4 className="fw-bold mb-1">ĐẠI HỌC CẦN THƠ</h4>
             <h6 className="mb-4">CAN THO UNIVERSITY</h6>
-
             <div className={`${styles.loginBox} mx-auto`}>
               <h6 className="fw-bold mb-3">QUÊN MẬT KHẨU</h6>
-              <form onSubmit={handleSubmit}>
-                {/* Email */}
-                <div className="mb-2 text-start">
+              {successMessage && (
+                <div className="alert alert-success mt-2 py-2 small" role="alert">
+                  {successMessage}
+                </div>
+              )}
+              {errorMessage && (
+                <div className="alert alert-danger mt-2 py-2 small" role="alert">
+                  {errorMessage}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="mb-3 text-start">
                   <input
                     type="email"
                     className={`form-control ${styles.input} ${errors.email ? 'is-invalid' : ''}`}
@@ -106,46 +114,30 @@ const ForgotPassword = () => {
                   />
                   {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
                 </div>
-
-                {/* Nút gửi yêu cầu */}
                 <button
                   type="submit"
                   className={`btn ${styles.btnLogin} w-100 mb-2`}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <span className={styles.spinner}>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Đang gửi...
-                    </span>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   ) : (
                     'Gửi yêu cầu'
                   )}
                 </button>
-
-                {/* Hiển thị thông báo thành công */}
-                {successMessage && (
-                  <div className="alert alert-success mt-2 py-2 small" role="alert">
-                    {successMessage}
-                  </div>
-                )}
-
-                {/* Hiển thị thông báo lỗi */}
-                {errorMessage && (
-                  <div className="alert alert-danger mt-2 py-2 small" role="alert">
-                    {errorMessage}
-                  </div>
-                )}
-
                 <div className="small mt-3">
-                  <Link to="/login" className={styles.link}>← Quay lại đăng nhập</Link>
+                  <Link to="/login" className={styles.link}>
+                    ← Quay lại đăng nhập
+                  </Link>
                 </div>
               </form>
             </div>
-
             <div className="text-center mt-4">
               <small>
-                All Rights Reserved. Developed by <Link to="#" className={styles.link}>CTU Soft</Link>
+                All Rights Reserved. Developed by{' '}
+                <Link to="/" className={styles.link}>
+                  CUSC
+                </Link>
               </small>
             </div>
           </div>

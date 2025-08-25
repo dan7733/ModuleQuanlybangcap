@@ -26,7 +26,7 @@ const UpdateDegree = () => {
     fileAttachment: '',
     digitalSignature: '',
   });
-  const [initialFormData, setInitialFormData] = useState(null); // Store initial data from DB
+  const [initialFormData, setInitialFormData] = useState(null);
   const [fileAttachment, setFileAttachment] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [cloudFileStatus, setCloudFileStatus] = useState('Chưa đồng bộ lên cloud');
@@ -54,7 +54,6 @@ const UpdateDegree = () => {
   const issueYearRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Hàm để lấy accessToken từ localStorage hoặc sessionStorage
   const getAccessToken = () => {
     const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (!userData) return null;
@@ -68,7 +67,6 @@ const UpdateDegree = () => {
 
   const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
 
-  // Fetch degree data and issuers
   useEffect(() => {
     if (!user || !user.auth || !['admin', 'manager'].includes(user.role)) {
       setError('Bạn không có quyền truy cập trang này.');
@@ -108,7 +106,7 @@ const UpdateDegree = () => {
             digitalSignature: degree.digitalSignature || '',
           };
           setFormData(formData);
-          setInitialFormData(formData); // Store initial data
+          setInitialFormData(formData);
           setSelectedIssuer(degree.issuerId?._id || degree.issuerId || '');
           if (degree.fileAttachment) {
             setPreviewUrl(`${process.env.REACT_APP_API_URL}/images/degrees/${degree.fileAttachment}`);
@@ -167,7 +165,6 @@ const UpdateDegree = () => {
     fetchIssuers();
   }, [user, navigate, id]);
 
-  // Fetch degree types when issuer changes
   useEffect(() => {
     if (selectedIssuer) {
       const fetchDegreeTypes = async () => {
@@ -221,8 +218,9 @@ const UpdateDegree = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Chỉ cho phép tải lên file hình ảnh.');
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Chỉ cho phép tải lên file hình ảnh (JPEG, PNG, GIF, WebP, BMP) hoặc PDF.');
         setFileAttachment(null);
         setPreviewUrl(null);
         return;
@@ -234,7 +232,11 @@ const UpdateDegree = () => {
         return;
       }
       setFileAttachment(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      if (file.type.startsWith('image/')) {
+        setPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setPreviewUrl(null); // Không hiển thị xem trước cho PDF
+      }
       setError('');
       console.log('New file selected:', file.name);
     }
@@ -289,8 +291,13 @@ const UpdateDegree = () => {
         setFormData((prevForm) => ({ ...prevForm, recipientDob: formattedDate }));
         return newDob;
       });
-      if ((field === 'day' && value.length === 2) || (field === 'month' && value.length >= 1 && value.length <= 2)) {
+      if (field === 'day' && value.length === 2) {
         nextRef.current?.focus();
+      } else if (field === 'month' && value.length === 2) {
+        const monthNum = parseInt(value, 10);
+        if (monthNum >= 1 && monthNum <= 12) {
+          nextRef.current?.focus();
+        }
       }
     } else if (type === 'issue') {
       setIssueDate((prev) => {
@@ -299,8 +306,13 @@ const UpdateDegree = () => {
         setFormData((prevForm) => ({ ...prevForm, issueDate: formattedDate }));
         return newIssue;
       });
-      if ((field === 'day' && value.length === 2) || (field === 'month' && value.length >= 1 && value.length <= 2)) {
+      if (field === 'day' && value.length === 2) {
         nextRef.current?.focus();
+      } else if (field === 'month' && value.length === 2) {
+        const monthNum = parseInt(value, 10);
+        if (monthNum >= 1 && monthNum <= 12) {
+          nextRef.current?.focus();
+        }
       }
     }
   };
@@ -333,7 +345,7 @@ const UpdateDegree = () => {
       'DegreeType not found': 'Không tìm thấy loại văn bằng.',
       'Selected DegreeType does not belong to the chosen issuer': 'Loại văn bằng không thuộc tổ chức đã chọn.',
       'Invalid User ID': 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
-      'Only image files are allowed.': 'Chỉ cho phép tải lên file hình ảnh.',
+      'Only image files (JPEG, PNG, GIF, WebP, BMP) or PDF are allowed.': 'Chỉ cho phép tải lên file hình ảnh (JPEG, PNG, GIF, WebP, BMP) hoặc PDF.',
       'File size exceeds 5MB limit.': 'Kích thước file vượt quá giới hạn 5MB.',
       'Degree not found': 'Không tìm thấy văn bằng.',
       'Permission denied': 'Bạn không có quyền cập nhật văn bằng này.',
@@ -733,7 +745,7 @@ const UpdateDegree = () => {
               <input
                 type="file"
                 className={`form-control ${styles.fileInput}`}
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/bmp,application/pdf"
                 onChange={handleFileChange}
                 ref={fileInputRef}
                 aria-label="File đính kèm"
@@ -743,11 +755,17 @@ const UpdateDegree = () => {
             {previewUrl && (
               <div className="col-12 d-flex flex-column flex-md-row mb-2">
                 <label className="form-label col-md-2 mb-1 mb-md-0">Tệp hiện tại</label>
-                <img
-                  src={previewUrl}
-                  alt="Xem trước văn bằng"
-                  className={styles.previewImage}
-                />
+                {formData.fileAttachment.endsWith('.pdf') ? (
+                  <a href={previewUrl} target="_blank" rel="noopener noreferrer" className={styles.previewLink}>
+                    Xem tệp PDF
+                  </a>
+                ) : (
+                  <img
+                    src={previewUrl}
+                    alt="Xem trước văn bằng"
+                    className={styles.previewImage}
+                  />
+                )}
               </div>
             )}
             <div className="col-12 d-flex flex-column flex-md-row mb-2">

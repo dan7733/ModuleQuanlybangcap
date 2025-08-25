@@ -230,15 +230,15 @@ Số vào sổ: <Số vào sổ nếu có>
 Chỉ trả về thông tin đã điền. Nếu không có thông tin nào, ghi "Không rõ".
 `;
 
-// Hàm trích xuất thông tin từ ảnh
-const extractCertificateInfo = async (filePath) => {
+// Hàm trích xuất thông tin từ ảnh hoặc PDF
+const extractCertificateInfo = async (filePath, mimeType) => {
   try {
     if (!fs.existsSync(filePath)) {
-      throw new Error(`Image file not found at: ${filePath}`);
+      throw new Error(`File not found at: ${filePath}`);
     }
 
-    const imageBuffer = fs.readFileSync(filePath);
-    logger.info('Read image file', { filePath, size: imageBuffer.length });
+    const fileBuffer = fs.readFileSync(filePath);
+    logger.info('Read file', { filePath, size: fileBuffer.length });
 
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) {
@@ -246,16 +246,17 @@ const extractCertificateInfo = async (filePath) => {
     }
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-    const encodedImage = imageBuffer.toString('base64');
-    logger.info('Sending request to Gemini API', { imageSize: imageBuffer.length });
+    const encodedFile = fileBuffer.toString('base64');
+    const payloadMimeType = mimeType === 'application/pdf' ? 'application/pdf' : 'image/jpeg';
+    logger.info('Sending request to Gemini API', { fileSize: fileBuffer.length, mimeType: payloadMimeType });
 
     const payload = {
       contents: [{
         parts: [
           {
             inlineData: {
-              mimeType: 'image/jpeg',
-              data: encodedImage
+              mimeType: payloadMimeType,
+              data: encodedFile
             }
           },
           {
@@ -265,15 +266,13 @@ const extractCertificateInfo = async (filePath) => {
       }]
     };
 
-    // cơ chế retry cho API 3 lần
     const maxRetries = 3;
     let attempt = 1;
     while (attempt <= maxRetries) {
       try {
         const { status, data } = await axios.post(url, payload, {
           headers: { 'Content-Type': 'application/json' },
-          // Thêm timeout để tránh treo
-          timeout: 30000 // 30 seconds
+          timeout: 30000
         });
 
         if (status !== 200) {
@@ -291,7 +290,7 @@ const extractCertificateInfo = async (filePath) => {
         if (error.response?.status === 503 && attempt < maxRetries) {
           logger.warn(`Gemini API 503 error, retrying (${attempt}/${maxRetries})`, { error: error.message });
           attempt++;
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
           continue;
         }
         throw error;
@@ -405,10 +404,11 @@ const extractDegreeFromImageAPI = async (req, res) => {
     const { issuerId, degreeTypeId } = req.body;
     const userId = req.user?.userId;
     const file = req.file;
+
     // Kiểm tra các tham số bắt buộc
     if (!file) {
-      logger.warn('No image file provided', { user: req.user?.email });
-      return res.status(400).json({ errCode: 1, message: 'No image file provided' });
+      logger.warn('No file provided', { user: req.user?.email });
+      return res.status(400).json({ errCode: 1, message: 'No image or PDF file provided' });
     }
 
     if (!mongoose.isValidObjectId(issuerId) || !mongoose.isValidObjectId(degreeTypeId)) {
@@ -423,10 +423,21 @@ const extractDegreeFromImageAPI = async (req, res) => {
       return res.status(400).json({ errCode: 1, message: 'Invalid user ID' });
     }
 
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      deleteImage(file.filename);
+      logger.error(`Invalid file type: ${file.mimetype}`, { userId, user: req.user?.email });
+      return res.status(400).json({
+        errCode: 1,
+        message: 'Only image files (JPEG, PNG, GIF, WebP, BMP) or PDF are allowed.',
+      });
+    }
+
     // Đọc file từ thư mục images/degrees
     const filePath = path.resolve('images/degrees', file.filename);
-    // Trích xuất thông tin từ ảnh
-    const text = await extractCertificateInfo(filePath);
+    // Trích xuất thông tin từ ảnh hoặc PDF
+    const text = await extractCertificateInfo(filePath, file.mimetype);
     // Nếu không có text, trả về lỗi
     const extractedData = await parseCertificateTextToJson(text, degreeTypeId);
 
@@ -435,28 +446,21 @@ const extractDegreeFromImageAPI = async (req, res) => {
     if (extractedData.serialNumber && extractedData.issueDate) {
       try {
         const formattedDate = new Date(extractedData.issueDate);
-        // Kiểm tra nếu ngày hợp lệ
         if (isNaN(formattedDate)) {
-          // Nếu ngày không hợp lệ, log cảnh báo và giữ nguyên tên file
           logger.warn('Invalid issueDate for renaming', { issueDate: extractedData.issueDate });
         } else {
-          // Đổi tên file theo định dạng serialNumber_YYYYMMDD.ext
           const dateStr = formattedDate.toISOString().slice(0, 10).replace(/-/g, '');
           const ext = path.extname(file.filename);
           finalFilename = `${extractedData.serialNumber}_${dateStr}${ext}`;
-          // Đổi tên file trong hệ thống tập tin
           const oldPath = path.resolve('images/degrees', file.filename);
           const newPath = path.resolve('images/degrees', finalFilename);
-          // Đổi tên file
           fs.renameSync(oldPath, newPath);
           logger.info(`Renamed file from ${file.filename} to ${finalFilename}`);
         }
       } catch (error) {
         logger.warn(`Failed to rename file ${file.filename}`, { error: error.message });
-        // Tiếp tục xử lý dù đổi tên thất bại
       }
     }
-    // Cập nhật tên file vào extractedData
     extractedData.fileAttachment = finalFilename;
 
     // Kiểm tra các trường bắt buộc
@@ -464,17 +468,15 @@ const extractDegreeFromImageAPI = async (req, res) => {
     const missingFields = requiredFields.filter(field => !extractedData[field]);
 
     if (missingFields.length > 0) {
-    if (finalFilename) {
-        deleteImage(finalFilename); // Delete file if required fields are missing
-        logger.info(`Deleted file due to missing required fields: ${finalFilename}`, { missingFields, user: req.user?.email });
-      }
-      logger.info('Extracted data incomplete, returning to frontend', { missingFields, user: req.user?.email });
+      deleteImage(finalFilename);
+      logger.info(`Deleted file due to missing required fields: ${finalFilename}`, { missingFields, user: req.user?.email });
       return res.status(200).json({
         errCode: 1,
         message: `Missing required fields: ${missingFields.join(', ')}`,
         data: extractedData
       });
     }
+
     // Tạo đối tượng degreeData
     const degreeData = {
       ...extractedData,
@@ -484,20 +486,20 @@ const extractDegreeFromImageAPI = async (req, res) => {
     };
     // Tạo degree mới
     const newDegree = await createDegree(degreeData, userId, issuerId);
-    logger.info(`Degree created from image successfully`, { id: newDegree._id, user: req.user?.email });
+    logger.info(`Degree created from file successfully`, { id: newDegree._id, user: req.user?.email });
     return res.status(201).json({
       errCode: 0,
-      message: 'Degree created successfully from image',
+      message: 'Degree created successfully from image or PDF',
       data: newDegree
     });
   } catch (error) {
     if (req.file) {
       deleteImage(req.file.filename);
     }
-    logger.error('Error extracting degree from image', { error: error.message, stack: error.stack, user: req.user?.email });
+    logger.error('Error extracting degree from file', { error: error.message, stack: error.stack, user: req.user?.email });
     return res.status(400).json({
       errCode: 1,
-      message: error.message || 'Error extracting degree from image'
+      message: error.message || 'Error extracting degree from image or PDF'
     });
   }
 };
@@ -507,8 +509,8 @@ const importDegreesFromExcel = async (req, res) => {
   try {
     const { issuerId, degreeTypeId } = req.body;
     const userId = req.user.userId;
-    const excelFile = req.files["file"]; // Excel file
-    const imageFiles = req.files["images"] || []; // Array of uploaded images
+    const excelFile = req.files["file"];
+    const imageFiles = req.files["images"] || [];
 
     if (!excelFile || !issuerId || !degreeTypeId) {
       if (excelFile) deleteImage(excelFile[0].filename);
@@ -522,6 +524,19 @@ const importDegreesFromExcel = async (req, res) => {
       imageFiles.forEach(file => deleteImage(file.filename));
       logger.warn("Invalid issuerId or degreeTypeId", { issuerId, degreeTypeId, user: req.user?.email });
       return res.status(400).json({ errCode: 1, message: "Invalid issuerId or degreeTypeId" });
+    }
+
+    // Validate file types for images/PDFs
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+    const invalidFiles = imageFiles.filter(file => !allowedTypes.includes(file.mimetype));
+    if (invalidFiles.length > 0) {
+      deleteImage(excelFile[0].filename);
+      imageFiles.forEach(file => deleteImage(file.filename));
+      logger.warn("Invalid file types in uploaded images/PDFs", { invalidFiles: invalidFiles.map(f => f.mimetype), user: req.user?.email });
+      return res.status(400).json({
+        errCode: 1,
+        message: "Only image files (JPEG, PNG, GIF, WebP, BMP) or PDF are allowed for degree attachments.",
+      });
     }
 
     const excelPath = path.resolve("images/degrees", excelFile[0].filename);
@@ -546,7 +561,6 @@ const importDegreesFromExcel = async (req, res) => {
         return; // Skip first 7 rows
       }
 
-      // Log raw data from Excel
       logger.debug(`Processing row ${rowNumber}: Raw values = ${JSON.stringify(row.values)}`);
       const degreeData = {
         recipientName: row.getCell(2)?.value?.toString()?.trim() || null,
@@ -556,41 +570,39 @@ const importDegreesFromExcel = async (req, res) => {
         registryNumber: row.getCell(6)?.value?.toString()?.trim() || null,
         placeOfIssue: row.getCell(7)?.value?.toString()?.trim() || "",
         signer: row.getCell(8)?.value?.toString()?.trim() || "",
-        recipientDob: row.getCell(9)?.value, // Updated column 9 for Date of Birth
-        issueDate: row.getCell(10)?.value,   // Updated column 10 for Issue Date
-        fileAttachment: null,                // Will be updated from imageFiles
+        recipientDob: row.getCell(9)?.value,
+        issueDate: row.getCell(10)?.value,
+        fileAttachment: null,
       };
 
-      // Convert dates with intermediate logging
       const originalRecipientDob = degreeData.recipientDob;
       if (typeof degreeData.recipientDob === 'number') {
         degreeData.recipientDob = convertExcelSerialToDate(degreeData.recipientDob);
-        console.log(`Converted recipientDob for row ${rowNumber} from ${originalRecipientDob}:`, degreeData.recipientDob);
+        logger.debug(`Converted recipientDob for row ${rowNumber} from ${originalRecipientDob}: ${degreeData.recipientDob}`);
       } else if (degreeData.recipientDob instanceof Date && !isNaN(degreeData.recipientDob.getTime())) {
-        console.log(`Kept recipientDob for row ${rowNumber} as Date from ${originalRecipientDob}:`, degreeData.recipientDob);
+        logger.debug(`Kept recipientDob for row ${rowNumber} as Date from ${originalRecipientDob}: ${degreeData.recipientDob}`);
       } else if (degreeData.recipientDob && typeof degreeData.recipientDob === 'string') {
         degreeData.recipientDob = new Date(degreeData.recipientDob);
-        console.log(`Converted recipientDob (string) for row ${rowNumber} from ${originalRecipientDob}:`, degreeData.recipientDob);
+        logger.debug(`Converted recipientDob (string) for row ${rowNumber} from ${originalRecipientDob}: ${degreeData.recipientDob}`);
       } else {
         degreeData.recipientDob = null;
-        console.log(`recipientDob set to null for row ${rowNumber} from ${originalRecipientDob}`);
+        logger.debug(`recipientDob set to null for row ${rowNumber} from ${originalRecipientDob}`);
       }
 
       const originalIssueDate = degreeData.issueDate;
       if (typeof degreeData.issueDate === 'number') {
         degreeData.issueDate = convertExcelSerialToDate(degreeData.issueDate);
-        console.log(`Converted issueDate for row ${rowNumber} from ${originalIssueDate}:`, degreeData.issueDate);
+        logger.debug(`Converted issueDate for row ${rowNumber} from ${originalIssueDate}: ${degreeData.issueDate}`);
       } else if (degreeData.issueDate instanceof Date && !isNaN(degreeData.issueDate.getTime())) {
-        console.log(`Kept issueDate for row ${rowNumber} as Date from ${originalIssueDate}:`, degreeData.issueDate);
+        logger.debug(`Kept issueDate for row ${rowNumber} as Date from ${originalIssueDate}: ${degreeData.issueDate}`);
       } else if (degreeData.issueDate && typeof degreeData.issueDate === 'string') {
         degreeData.issueDate = new Date(degreeData.issueDate);
-        console.log(`Converted issueDate (string) for row ${rowNumber} from ${originalIssueDate}:`, degreeData.issueDate);
+        logger.debug(`Converted issueDate (string) for row ${rowNumber} from ${originalIssueDate}: ${degreeData.issueDate}`);
       } else {
         degreeData.issueDate = null;
-        console.log(`issueDate set to null for row ${rowNumber} from ${originalIssueDate}`);
+        logger.debug(`issueDate set to null for row ${rowNumber} from ${originalIssueDate}`);
       }
 
-      // Log processed data
       logger.debug(`Processed degreeData for row ${rowNumber}: ${JSON.stringify(degreeData)}`);
       const requiredFields = ["recipientName", "recipientDob", "serialNumber", "registryNumber", "issueDate"];
       const missingFields = requiredFields.filter(
@@ -609,21 +621,20 @@ const importDegreesFromExcel = async (req, res) => {
       }
     });
 
-    // Log number of valid rows
-    console.log(`Valid rows before image check:`, validRows);
     logger.debug(`Valid rows: ${JSON.stringify(validRows)}`);
     if (imageFiles.length > 0) {
       if (imageFiles.length !== validRows.length) {
         deleteImage(excelFile[0].filename);
         imageFiles.forEach(file => deleteImage(file.filename));
-        logger.warn("Number of images does not match the number of valid rows in the Excel file", {
+        logger.warn("Number of images/PDFs does not match the number of valid rows in the Excel file", {
           imageCount: imageFiles.length,
           rowCount: validRows.length,
           user: req.user?.email,
         });
         return res.status(400).json({
           errCode: 1,
-          message: `Number of images (${imageFiles.length}) does not match the number of valid rows in Excel (${validRows.length}). Please check again.`,
+          message: `Number of images/PDFs (${imageFiles.length}) does not match the number of valid rows in Excel (${validRows.length}). Please check again.`,
+          data: { imageCount: imageFiles.length, rowCount: validRows.length }
         });
       }
 
@@ -633,14 +644,13 @@ const importDegreesFromExcel = async (req, res) => {
         if (degree && imageFiles[index]) {
           const newFilename = renameImageFile(imageFiles[index].filename, degree.serialNumber, degree.issueDate);
           degree.fileAttachment = newFilename;
-          logger.info(`Assigned and renamed image ${newFilename} to row ${row.rowNumber}`);
+          logger.info(`Assigned and renamed file ${newFilename} to row ${row.rowNumber}`);
         }
       });
     }
 
     // Delete Excel file after reading
     deleteImage(excelFile[0].filename);
-    // Do not delete imageFiles as they have been renamed and saved
 
     if (degrees.length === 0) {
       logger.warn("No valid data found in Excel file", { errors });
@@ -1062,8 +1072,7 @@ const deleteDegreeAPI = async (req, res) => {
 
 const updateDegreeAPI = async (req, res) => {
   try {
-    // Extract id from req.params
-    const id = req.params.id; // Changed from destructuring to direct access for clarity
+    const id = req.params.id;
     if (!id) {
       logger.error('Degree ID is missing in request parameters', { user: req.user?.email });
       return res.status(400).json({
@@ -1130,6 +1139,19 @@ const updateDegreeAPI = async (req, res) => {
       });
     }
 
+    // Validate file type
+    if (req.file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        deleteImage(req.file.filename);
+        logger.error(`Invalid file type: ${req.file.mimetype}`, { userId, email, degreeId: id });
+        return res.status(400).json({
+          errCode: 1,
+          message: 'Only image files (JPEG, PNG, GIF, WebP, BMP) or PDF are allowed.',
+        });
+      }
+    }
+
     // Rename file if provided
     if (req.file && serialNumber && issueDate) {
       try {
@@ -1188,7 +1210,7 @@ const updateDegreeAPI = async (req, res) => {
         await deleteFromMega(updatedDegree.cloudFile);
         logger.info(`Deleted cloud file from Mega.nz for degree ${id}`, { cloudFile: updatedDegree.cloudFile });
         updatedDegree.cloudFile = null;
-        await updatedDegree.save(); // Save the updated degree with cloudFile set to null
+        await updatedDegree.save();
       } catch (error) {
         logger.warn(`Failed to delete cloud file for degree ${id}: ${error.message}`, {
           cloudFile: updatedDegree.cloudFile,

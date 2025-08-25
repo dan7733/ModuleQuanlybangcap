@@ -22,7 +22,7 @@ const AddDegree = () => {
     issuerId: '',
   });
   const [fileAttachment, setFileAttachment] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null); // State cho ảnh xem trước
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [issuers, setIssuers] = useState([]);
   const [degreeTypes, setDegreeTypes] = useState([]);
   const [selectedIssuer, setSelectedIssuer] = useState('');
@@ -140,8 +140,9 @@ const AddDegree = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Chỉ cho phép tải lên file hình ảnh.');
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Chỉ cho phép tải lên file hình ảnh (JPEG, PNG, GIF, WebP, BMP) hoặc PDF.');
         setFileAttachment(null);
         setPreviewUrl(null);
         return;
@@ -153,7 +154,11 @@ const AddDegree = () => {
         return;
       }
       setFileAttachment(file);
-      setPreviewUrl(URL.createObjectURL(file)); // Tạo URL xem trước
+      if (file.type.startsWith('image/')) {
+        setPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setPreviewUrl(null); // Không hiển thị xem trước cho PDF
+      }
       setError('');
     }
   };
@@ -165,7 +170,7 @@ const AddDegree = () => {
     }
 
     const dayNum = parseInt(day, 10);
-    const monthNum = parseInt(month, 10); // Chuẩn hóa tháng
+    const monthNum = parseInt(month, 10);
     const yearNum = parseInt(year, 10);
 
     if (dayNum < 1 || dayNum > 31) {
@@ -198,7 +203,6 @@ const AddDegree = () => {
   const handleDateTextChange = (type, field, value, nextRef) => {
     if (value && !/^\d*$/.test(value)) return;
 
-    // Chuẩn hóa giá trị: loại bỏ số 0 ở đầu
     const normalizedValue = value ? parseInt(value, 10).toString() : '';
 
     if (type === 'dob') {
@@ -208,8 +212,13 @@ const AddDegree = () => {
         setFormData((prevForm) => ({ ...prevForm, recipientDob: formattedDate }));
         return newDob;
       });
-      if ((field === 'day' && value.length === 2) || (field === 'month' && value.length >= 1 && value.length <= 2)) {
+      if (field === 'day' && value.length === 2) {
         nextRef.current?.focus();
+      } else if (field === 'month' && value.length === 2) {
+        const monthNum = parseInt(value, 10);
+        if (monthNum >= 1 && monthNum <= 12) {
+          nextRef.current?.focus();
+        }
       }
     } else if (type === 'issue') {
       setIssueDate((prev) => {
@@ -218,14 +227,18 @@ const AddDegree = () => {
         setFormData((prevForm) => ({ ...prevForm, issueDate: formattedDate }));
         return newIssue;
       });
-      if ((field === 'day' && value.length === 2) || (field === 'month' && value.length >= 1 && value.length <= 2)) {
+      if (field === 'day' && value.length === 2) {
         nextRef.current?.focus();
+      } else if (field === 'month' && value.length === 2) {
+        const monthNum = parseInt(value, 10);
+        if (monthNum >= 1 && monthNum <= 12) {
+          nextRef.current?.focus();
+        }
       }
     }
   };
 
   const handleDateSelectChange = (type, field, value) => {
-    // Chuẩn hóa giá trị từ select
     const normalizedValue = value ? parseInt(value, 10).toString() : '';
 
     if (type === 'dob') {
@@ -258,8 +271,8 @@ const AddDegree = () => {
       return 'Loại văn bằng không thuộc tổ chức đã chọn.';
     } else if (serverMessage === 'Invalid User ID') {
       return 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.';
-    } else if (serverMessage === 'Only image files are allowed.') {
-      return 'Chỉ cho phép tải lên file hình ảnh.';
+    } else if (serverMessage === 'Only image files (JPEG, PNG, GIF, WebP, BMP) or PDF are allowed.') {
+      return 'Chỉ cho phép tải lên file hình ảnh (JPEG, PNG, GIF, WebP, BMP) hoặc PDF.';
     } else if (serverMessage === 'File size exceeds 5MB limit.') {
       return 'Kích thước file vượt quá giới hạn 5MB.';
     }
@@ -325,7 +338,7 @@ const AddDegree = () => {
           issuerId: '',
         });
         setFileAttachment(null);
-        setPreviewUrl(null); // Reset ảnh xem trước
+        setPreviewUrl(null);
         fileInputRef.current.value = null;
         setDobDate({ day: '', month: '', year: '' });
         setIssueDate({ day: '', month: '', year: '' });
@@ -363,7 +376,7 @@ const AddDegree = () => {
       issuerId: '',
     });
     setFileAttachment(null);
-    setPreviewUrl(null); // Reset ảnh xem trước
+    setPreviewUrl(null);
     fileInputRef.current.value = null;
     setDobDate({ day: '', month: '', year: '' });
     setIssueDate({ day: '', month: '', year: '' });
@@ -377,6 +390,15 @@ const AddDegree = () => {
   return (
     <div className="bg-light p-4">
       <div className="container bg-white p-4 rounded shadow-sm">
+        {loading && (
+          <div className={styles.fullScreenLoading}>
+            <div className={styles.loadingContent}>
+              <div className={styles.spinner}></div>
+              <p className={styles.loadingText}>Đang tải...</p>
+            </div>
+          </div>
+        )}
+
         <div className={`d-flex gap-2 mb-3 flex-wrap ${styles.actionButtons}`}>
           <button className={`btn ${styles.bthThembangcap}`} onClick={() => navigate('/listdegree')}>
             <i className="fas fa-arrow-left"></i> Quay lại
@@ -385,13 +407,6 @@ const AddDegree = () => {
 
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
-        {loading && (
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className={styles.borderBox}>
           <div className="row g-3">
@@ -463,7 +478,7 @@ const AddDegree = () => {
                   <input
                     type="file"
                     className={`form-control ${styles.fileInput}`}
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp,image/bmp,application/pdf"
                     onChange={handleFileChange}
                     ref={fileInputRef}
                     aria-label="File đính kèm"

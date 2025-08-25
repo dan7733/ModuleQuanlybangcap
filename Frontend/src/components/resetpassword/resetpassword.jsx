@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './resetpassword.module.css';
+import logo from '../../assets/logo/logoDHCT.png';
 
 const ResetPassword = () => {
   const [token, setToken] = useState(null);
@@ -81,7 +82,7 @@ const ResetPassword = () => {
         setNewPassword('');
         setConfirmPassword('');
         setToken(null);
-        setTimeout(() => navigate('/login'), 3000); // Redirect to login after 3 seconds
+        setTimeout(() => navigate('/login'), 3000);
       } else {
         setFormError(data.message);
       }
@@ -93,85 +94,92 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className={styles.background}>
-      <div className={styles.overlay}></div>
-      <div className={`${styles.container} ${tokenError ? styles['has-error'] : ''}`}>
-        <div className={styles.card}>
-          <h2>Đổi Mật Khẩu</h2>
+    <div className={styles.container}>
+      <div className={styles.formContainer}>
+        <img src={logo} alt="Logo" className={styles.logo} />
+        <h4>ĐẠI HỌC CẦN THƠ</h4>
+        <h6>CAN THO UNIVERSITY</h6>
+        <div className={styles.formBox}>
+          <h6>ĐỔI MẬT KHẨU</h6>
           {isLoading ? (
             <div className={styles.loader}>
-              <div className={styles.spinner}></div>
+              <span className={styles.spinner}></span>
               <p>Đang xác thực liên kết...</p>
             </div>
           ) : tokenError ? (
-            <>
-              <p className={styles.error}>
-                {tokenError} <br />
-                <span>Đang chuyển hướng về trang chủ...</span>
-              </p>
-              <p className={styles.secondaryMessage}>
-                Vui lòng kiểm tra lại liên kết hoặc liên hệ hỗ trợ nếu vấn đề tiếp diễn.
-              </p>
-            </>
+            <div className={styles.errorMessage}>
+              <p>{tokenError}</p>
+              <p className={styles.secondaryMessage}>Đang chuyển hướng về trang chủ...</p>
+            </div>
           ) : successMessage ? (
-            <p className={styles.success}>
-              Đổi mật khẩu thành công <br />
-              <span>Đang chuyển hướng đến trang đăng nhập...</span>
-            </p>
+            <div className={styles.successMessage}>
+              <p>{successMessage}</p>
+              <p className={styles.secondaryMessage}>Đang chuyển hướng đến trang đăng nhập...</p>
+            </div>
           ) : (
             <>
               <form onSubmit={handleSubmit}>
                 {formError && (
-                  <p className={styles.formError}>
-                    {formError}
-                  </p>
+                  <div className={styles.errorMessage}>{formError}</div>
                 )}
-                <input
-                  type="password"
-                  placeholder="Mật Khẩu Mới"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  aria-label="Mật Khẩu Mới"
-                />
-                <input
-                  type="password"
-                  placeholder="Xác Nhận Mật Khẩu"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  aria-label="Xác Nhận Mật Khẩu"
-                />
-                <button type="submit" disabled={isSubmitting} aria-label="Đổi Mật Khẩu">
-                  {isSubmitting ? 'Đang xử lý...' : 'Đổi Mật Khẩu'}
+                <div className={styles.inputGroup}>
+                  <input
+                    type="password"
+                    className={styles.input}
+                    placeholder="Mật Khẩu Mới"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    aria-label="Mật Khẩu Mới"
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <input
+                    type="password"
+                    className={styles.input}
+                    placeholder="Xác Nhận Mật Khẩu"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    aria-label="Xác Nhận Mật Khẩu"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={isSubmitting}
+                  aria-label="Đổi Mật Khẩu"
+                >
+                  {isSubmitting ? (
+                    <span className={styles.spinner}>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Đang xử lý...
+                    </span>
+                  ) : (
+                    'Đổi Mật Khẩu'
+                  )}
                 </button>
               </form>
-              <Link to="/lookup" className={styles.backLink}>
-                Quay lại trang tra cứu
-              </Link>
+              <div className={styles.linkContainer}>
+                <Link to="/lookup" className={styles.link}>← Quay lại trang tra cứu</Link>
+              </div>
             </>
           )}
         </div>
-        {isLoading ? (
-          <div className={styles.alternativeMessage}>
-            <div className={styles.spinner}></div>
-            <p>Đang tải yêu cầu mật khẩu...</p>
-          </div>
-        ) : tokenError ? (
-          <div className={styles.alternativeMessage}>
-            <p>Hệ thống đang xử lý, vui lòng chờ trong giây lát hoặc thử lại sau.</p>
-          </div>
-        ) : (
+        {!isLoading && !tokenError && !successMessage && (
           <div className={styles.requirements}>
-            <h3>
-              Yêu Cầu <span>Mật Khẩu</span>
-            </h3>
+            <h6>YÊU CẦU MẬT KHẨU</h6>
             <ul>
               <li>Mật khẩu phải có hơn 8 ký tự</li>
               <li>Mật khẩu phải chứa ít nhất một số</li>
             </ul>
           </div>
         )}
+        <div className={styles.footer}>
+          <small>
+            All Rights Reserved. Developed by <Link to="#" className={styles.link}>CTU Soft</Link>
+          </small>
+        </div>
       </div>
     </div>
   );
