@@ -3,11 +3,11 @@ import axios from 'axios';
 import { QRCodeCanvas } from 'qrcode.react';
 import { BrowserQRCodeReader } from '@zxing/library';
 import { useParams } from 'react-router-dom';
-import styles from './diplomalookup.module.css';
-import qrImage from '../../assets/diplomalookup/qrnew.png';
+import styles from './degreelookup.module.css';
+import qrImage from '../../assets/degree/qrnew.png';
 import logo from '../../assets/logo/logoDHCT.png';
 
-const DiplomaLookup = () => {
+const DegreeLookup = () => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     fullname: '',
@@ -661,11 +661,11 @@ const DiplomaLookup = () => {
                   <button type="button" className="btn-close" onClick={closeModal}></button>
                 </div>
                 <div className="modal-body">
-                  <div className={styles.diplomaHeader}>
-                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.diplomaLogo} />
+                  <div className={styles.degreeHeader}>
+                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.degreeLogo} />
                     <h2 className={styles.universityTitle}>Đại học Cần Thơ</h2>
                   </div>
-                  <div className={styles.diplomaContent}>
+                  <div className={styles.degreeContent}>
                     <p><strong>Tên người nhận:</strong> <span>{selectedDegree.recipientName || 'N/A'}</span></p>
                     <p><strong>Ngày sinh:</strong> <span>{selectedDegree.recipientDob ? new Date(selectedDegree.recipientDob).toLocaleDateString() : 'N/A'}</span></p>
                     <p><strong>Nơi sinh:</strong> <span>{selectedDegree.placeOfBirth || 'N/A'}</span></p>
@@ -697,11 +697,11 @@ const DiplomaLookup = () => {
                   <button type="button" className="btn-close" onClick={closeQrModal}></button>
                 </div>
                 <div className="modal-body">
-                  <div className={styles.diplomaHeader}>
-                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.diplomaLogo} />
+                  <div className={styles.degreeHeader}>
+                    <img src={logo} alt="Logo Đại học Cần Thơ" className={styles.degreeLogo} />
                     <h2 className={styles.universityTitle}>Đại học Cần Thơ</h2>
                   </div>
-                  <div className={styles.diplomaContent}>
+                  <div className={styles.degreeContent}>
                     <p><strong>Đơn vị cấp:</strong> <span>{selectedQrDegree.issuerName || 'CUSC'}</span></p>
                     <div className={styles.qrCodeContainer} ref={qrCanvasRef}>
                       <QRCodeCanvas value={`${WEBSITE_URL}/degree/${selectedQrDegree._id}`} size={200} />
@@ -726,4 +726,4 @@ const DiplomaLookup = () => {
   );
 };
 
-export default DiplomaLookup;
+export default DegreeLookup;

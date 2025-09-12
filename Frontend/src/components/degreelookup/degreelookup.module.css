@@ -55,7 +55,7 @@
   font-family: 'Times New Roman', Times, serif;
 }
 
-.diplomaHeader {
+.degreeHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -64,7 +64,7 @@
   border-bottom: 3px double #FFD700;
 }
 
-.diplomaLogo {
+.degreeLogo {
   width: 80px;
   height: 80px;
   object-fit: contain;
@@ -79,7 +79,7 @@
   letter-spacing: 2px;
 }
 
-.diplomaContent p {
+.degreeContent p {
   margin: 15px 0;
   display: flex;
   justify-content: space-between;
@@ -88,11 +88,11 @@
   transition: all 0.3s ease;
 }
 
-.diplomaContent p:hover {
+.degreeContent p:hover {
   background-color: rgba(11, 97, 157, 0.1);
 }
 
-.diplomaContent p strong {
+.degreeContent p strong {
   color: #0b619d;
   font-weight: 600;
   flex: 0 0 40%;
@@ -100,13 +100,13 @@
   padding-right: 15px;
 }
 
-.diplomaContent p span {
+.degreeContent p span {
   flex: 1;
   text-align: left;
   padding-left: 15px;
 }
 
-.diplomaContent p:last-child {
+.degreeContent p:last-child {
   border-bottom: none;
 }
 
@@ -167,13 +167,13 @@
   padding: 20px;
 }
 
-.qrModal .diplomaHeader {
+.qrModal .degreeHeader {
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 2px solid #FFD700;
 }
 
-.qrModal .diplomaLogo {
+.qrModal .degreeLogo {
   width: 60px; /* Smaller logo */
   height: 60px;
 }
@@ -183,13 +183,13 @@
   letter-spacing: 1.5px;
 }
 
-.qrModal .diplomaContent {
+.qrModal .degreeContent {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.qrModal .diplomaContent p {
+.qrModal .degreeContent p {
   justify-content: space-between;
   font-weight: 500; /* Less bold for simplicity */
   color: #0b619d;
@@ -200,13 +200,13 @@
   width: 80%;
 }
 
-.qrModal .diplomaContent p strong {
+.qrModal .degreeContent p strong {
   flex: 0 0 40%;
   text-align: right;
   padding-right: 10px;
 }
 
-.qrModal .diplomaContent p span {
+.qrModal .degreeContent p span {
   flex: 1;
   text-align: left;
   padding-left: 10px;

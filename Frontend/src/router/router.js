@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from '../App'; // Ensure the path is correct
-import DiplomaLookup from '../components/diplomalookup/diplomalookup';
+import DegreeLookup from '../components/degreelookup/degreelookup';
 import Login from '../components/login/login';
 import ForgotPassword from '../components/forgotpassword/forgotpassword';
 import ResetPassword from '../components/resetpassword/resetpassword';
@@ -10,25 +10,26 @@ import ChangePassword from '../components/userlayout/changpassword/changepasswor
 import AddDegreetype from '../components/degreetype/adddegreetype/adddegreetype'; 
 import ListDegreetype from '../components/degreetype/listdegreetype/listdegreetype';
 import UpdateDegreetype from '../components/degreetype/updatedegreetype/updatedegreetype';
-import AddUser from '../components/usermanager/adduser/adduser'; // Ensure the path is correct
+import AddUser from '../components/usermanager/adduser/adduser';
 import ListUser from '../components/usermanager/listuser/listuser';
-import UpdateUser from '../components/usermanager/updateuser/updateuser'; // Ensure the path is correct
-import AddDegree from '../components/degreemanager/adddegree/adddegree'; // Ensure the path is correct
-import AddDegreeImage from '../components/degreemanager/adddegreeimage/adddegreeimage'; // Ensure the path is correct
-import AddDegreeExcel from '../components/degreemanager/adddegreeexcel/adddegreeexcel'; // Ensure the path is correct
-import AddIssuer from '../components/issuermanager/addissuer/addissuer'; // Ensure the path is correct
+import UpdateUser from '../components/usermanager/updateuser/updateuser';
+import AddDegree from '../components/degreemanager/adddegree/adddegree';
+import AddDegreeImage from '../components/degreemanager/adddegreeimage/adddegreeimage';
+import AddDegreeExcel from '../components/degreemanager/adddegreeexcel/adddegreeexcel';
+import AddIssuer from '../components/issuermanager/addissuer/addissuer';
 import ListIssuer from '../components/issuermanager/listissuer/listissuer';
-import UpdateIssuer from '../components/issuermanager/updateissuer/updateissuer'; // Ensure the path is correct
+import UpdateIssuer from '../components/issuermanager/updateissuer/updateissuer';
 import ListDegree from '../components/degreemanager/listdegree/listdegree';
-import ServerLog from '../components/serverlog/serverlog'; // Ensure the path is correct'
-import UpdateDegree from '../components/degreemanager/updatedegree/updatedegree'; // Ensure the path is correct
-import ListVerificationDegree from '../components/degreeverification/listdegree/listverificationdegree'; // Ensure the path is correct
-import DegreeVerificationDetails from '../components/degreeverification/degreedetails/degreedetails'; // Ensure the path is correct
-import UpdateProfile from '../components/userlayout/updateprofile/updateprofile'; // Ensure the path is correct
+import ServerLog from '../components/serverlog/serverlog';
+import UpdateDegree from '../components/degreemanager/updatedegree/updatedegree';
+import ListVerificationDegree from '../components/degreeverification/listdegree/listverificationdegree';
+import DegreeVerificationDetails from '../components/degreeverification/degreedetails/degreedetails';
+import UpdateProfile from '../components/userlayout/updateprofile/updateprofile';
+
 const HomePage = () => {
   return (
     <> 
-      <DiplomaLookup />
+      <DegreeLookup />
     </>
   );
 };
@@ -60,7 +61,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "degree/:id",
-        element: <DiplomaLookup />
+        element: <DegreeLookup />
       },
       {
         path: "adddegreetype",
@@ -83,15 +84,15 @@ export const router = createBrowserRouter([
         element: <ListUser />
       },
       {
-        path: 'updateuser/:id', // New route
+        path: 'updateuser/:id',
         element: <UpdateUser />,
       },
       {
-        path: 'addissuer', // New route
+        path: 'addissuer',
         element: <AddIssuer />,
       },
       {
-        path: 'listissuer', // New route
+        path: 'listissuer',
         element: <ListIssuer />,
       },
       {
@@ -99,31 +100,31 @@ export const router = createBrowserRouter([
         element: <UpdateIssuer />,
       },
       {
-        path: 'adddegree', // New route
+        path: 'adddegree',
         element: <AddDegree />,
       },
       {
-        path: 'adddegreeimage', // New route
+        path: 'adddegreeimage',
         element: <AddDegreeImage />,
       },
       {
-        path: 'adddegreeexcel', // New route
+        path: 'adddegreeexcel',
         element: <AddDegreeExcel />,
       },
       {
-        path: 'listdegree', // New route
+        path: 'listdegree',
         element: <ListDegree />,
       },
       {
-        path: 'updatedegree/:id', // New route
+        path: 'updatedegree/:id',
         element: <UpdateDegree />,
       },
       {
-        path: 'listverificationdegree', // New route
+        path: 'listverificationdegree',
         element: <ListVerificationDegree />,
       },
       {
-        path: 'degreeVerification/:id', // New route
+        path: 'degreeVerification/:id',
         element: <DegreeVerificationDetails />,
       },
       {
@@ -142,7 +143,6 @@ export const router = createBrowserRouter([
             path: 'update-profile',
             element: <UpdateProfile />,
           },
-          // Các tuyến khác như changeinfor, changepassword, orderlist, v.v. giữ nguyên
         ],
       },
     ]
